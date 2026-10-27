@@ -13,6 +13,7 @@ ClipAudioProcessor::ClipAudioProcessor()
     threshold = apvts.getRawParameterValue (Parameters::threshold.getParamID());
     softness = apvts.getRawParameterValue (Parameters::softness.getParamID());
     outputGain = apvts.getRawParameterValue (Parameters::outputGain.getParamID());
+    mix = apvts.getRawParameterValue (Parameters::mix.getParamID());
     oversampling = apvts.getRawParameterValue (Parameters::oversampling.getParamID());
 
     startTimerHz (10);
@@ -20,14 +21,10 @@ ClipAudioProcessor::ClipAudioProcessor()
 
 void ClipAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    oversampler.prepare (getTotalNumOutputChannels(), samplesPerBlock);
-    oversampler.setFactorIndex ((int) oversampling->load());
-    clipper.setAntialiasing (oversampler.getFactor() > 1);
+    setChainParameters (bypass->get());
+    chain.prepare (sampleRate, getTotalNumOutputChannels(), samplesPerBlock, (int) oversampling->load());
 
-    clipper.setParameters (inputGain->load(), threshold->load(), softness->load(), outputGain->load());
-    clipper.prepare (sampleRate * oversampler.getFactor());
-
-    pendingLatency = oversampler.getLatencySamples();
+    pendingLatency = chain.getLatencySamples();
     setLatencySamples (pendingLatency);
 }
 
@@ -46,21 +43,32 @@ bool ClipAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) con
 
 void ClipAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
+    process (buffer, bypass->get());
+}
+
+// Hosts that bypass without the bypass parameter still get the delayed, crossfaded dry signal
+void ClipAudioProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
+{
+    process (buffer, true);
+}
+
+void ClipAudioProcessor::process (juce::AudioBuffer<float>& buffer, bool bypassed)
+{
     juce::ScopedNoDenormals noDenormals;
 
     for (auto ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
         buffer.clear (ch, 0, buffer.getNumSamples());
 
-    if (const auto factorIndex = (int) oversampling->load(); factorIndex != oversampler.getFactorIndex())
-    {
-        oversampler.setFactorIndex (factorIndex);
-        clipper.setAntialiasing (oversampler.getFactor() > 1);
-        clipper.prepare (getSampleRate() * oversampler.getFactor());
-        pendingLatency = oversampler.getLatencySamples();
-    }
+    chain.setOversampling ((int) oversampling->load());
+    setChainParameters (bypassed);
+    chain.process (buffer);
 
-    clipper.setParameters (inputGain->load(), threshold->load(), softness->load(), outputGain->load());
-    oversampler.process (buffer, [this] (juce::dsp::AudioBlock<float> block) { clipper.process (block); });
+    pendingLatency = chain.getLatencySamples();
+}
+
+void ClipAudioProcessor::setChainParameters (bool bypassed)
+{
+    chain.setParameters (inputGain->load(), threshold->load(), softness->load(), outputGain->load(), mix->load(), bypassed);
 }
 
 void ClipAudioProcessor::timerCallback()
