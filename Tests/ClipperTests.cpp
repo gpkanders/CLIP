@@ -60,6 +60,28 @@ public:
             expectWithinAbsoluteError(buffer.getSample(1, 1), 1.0f / gain / gain, 1.0e-6f);
         }
 
+        beginTest("input gain step ramps over the smoothing time");
+        {
+            constexpr auto sampleRate = 48000.0;
+            const auto rampSamples = (int) (sampleRate * Clipper::smoothingSeconds);
+            juce::AudioBuffer<float> buffer(1, rampSamples * 2);
+            juce::FloatVectorOperations::fill(buffer.getWritePointer(0), 0.1f, buffer.getNumSamples());
+
+            Clipper clipper;
+            clipper.setParameters(0.0f, 0.0f, 0.0f, 0.0f);
+            clipper.prepare(sampleRate);
+            clipper.setParameters(12.0f, 0.0f, 0.0f, 0.0f);
+            clipper.process(buffer);
+
+            const auto target = 0.1f * juce::Decibels::decibelsToGain(12.0f);
+            expect(buffer.getSample(0, 0) < 0.11f, "first sample jumped");
+            expect(buffer.getSample(0, rampSamples / 2) > 0.11f && buffer.getSample(0, rampSamples / 2) < target * 0.9f);
+            for (auto i = 1; i < rampSamples; ++i)
+                expect(buffer.getSample(0, i) > buffer.getSample(0, i - 1));
+            expectWithinAbsoluteError(buffer.getSample(0, rampSamples), target, 1.0e-5f);
+            expectWithinAbsoluteError(buffer.getSample(0, buffer.getNumSamples() - 1), target, 1.0e-5f);
+        }
+
         beginTest("process does not allocate");
         {
             juce::AudioBuffer<float> buffer(2, 512);
