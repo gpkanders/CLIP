@@ -42,6 +42,7 @@ set(SourceFiles
         Source/dsp/ClipChain.h
         Source/dsp/Clipper.h
         Source/dsp/Oversampler.h
+        Source/dsp/PeakFifo.h
         Source/dsp/TransferCurves.h
 )
 
@@ -95,6 +96,7 @@ target_sources(CLIPTests PRIVATE
         Tests/OversamplerTests.cpp
         Tests/ClipChainTests.cpp
         Tests/ProcessorTests.cpp
+        Tests/PeakFifoTests.cpp
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
 )

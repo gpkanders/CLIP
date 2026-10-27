@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "dsp/ClipChain.h"
+#include "dsp/PeakFifo.h"
 
 class ClipAudioProcessor : public juce::AudioProcessor,
                            private juce::Timer
@@ -36,6 +37,9 @@ public:
 
     juce::AudioProcessorValueTreeState apvts;
 
+    // Read by the editor on the message thread
+    PeakFifo peakFifo;
+
 private:
     void process (juce::AudioBuffer<float>& buffer, bool bypassed);
     void setChainParameters (bool bypassed);
@@ -50,6 +54,10 @@ private:
     std::atomic<float>* oversampling = nullptr;
 
     ClipChain chain;
+
+    // Delays the input by the chain's latency so its peaks line up with the output's
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::None> inputDelay;
+    juce::AudioBuffer<float> delayedInput;
 
     // Written on the audio thread, reported to the host from the message thread
     std::atomic<int> pendingLatency { 0 };
