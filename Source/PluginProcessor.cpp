@@ -15,8 +15,10 @@ ClipAudioProcessor::ClipAudioProcessor()
     outputGain = apvts.getRawParameterValue (Parameters::outputGain.getParamID());
 }
 
-void ClipAudioProcessor::prepareToPlay (double, int)
+void ClipAudioProcessor::prepareToPlay (double sampleRate, int)
 {
+    clipper.setParameters (inputGain->load(), threshold->load(), softness->load(), outputGain->load());
+    clipper.prepare (sampleRate);
 }
 
 void ClipAudioProcessor::releaseResources()
