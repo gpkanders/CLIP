@@ -41,6 +41,22 @@ public:
             expectEquals(createEditor(processor)->getWidth(), ClipAudioProcessorEditor::defaultWidth * 2);
         }
 
+        beginTest("the panel stays fully visible when a host ignores the aspect ratio");
+        {
+            ClipAudioProcessor processor;
+            const auto editor = createEditor(processor);
+            auto* panel = editor->getChildComponent(0);
+
+            // 1251x750 is what macOS produced for a 1200x750 request on a window with a title bar
+            for (auto [width, height] : { std::pair { 1251, 750 }, std::pair { 800, 600 }, std::pair { 1000, 625 } })
+            {
+                editor->setSize(width, height);
+                const auto shown = panel->getBoundsInParent();
+                expect(editor->getLocalBounds().contains(shown), shown.toString() + " in " + juce::String(width) + "x" + juce::String(height));
+                expect(shown.getWidth() >= width - 2 || shown.getHeight() >= height - 2, "fills one side");
+            }
+        }
+
         beginTest("knobs show units and reset to their defaults on double click");
         {
             ClipAudioProcessor processor;

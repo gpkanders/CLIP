@@ -12,6 +12,7 @@ public:
     explicit ClipAudioProcessorEditor (ClipAudioProcessor&);
     ~ClipAudioProcessorEditor() override;
 
+    void paint (juce::Graphics&) override;
     void resized() override;
 
 private:

@@ -30,9 +30,19 @@ void ClipAudioProcessorEditor::drainPeaks()
     panel.showPeaks (newPeaks.data(), numPeaks);
 }
 
-// Scaling the whole panel keeps text, strokes and hit areas in proportion at any size
+void ClipAudioProcessorEditor::paint (juce::Graphics& g)
+{
+    g.fillAll (Palette::background);
+}
+
+// Scaling the whole panel keeps text, strokes and hit areas in proportion at any size.
+// Hosts don't always keep the aspect ratio (macOS applies it to a window frame including its title bar),
+// so the panel is fitted to whichever side is tighter and centred.
 void ClipAudioProcessorEditor::resized()
 {
     clipProcessor.editorWidth = getWidth();
-    panel.setTransform (juce::AffineTransform::scale ((float) getWidth() / defaultWidth));
+
+    const auto scale = std::min ((float) getWidth() / defaultWidth, (float) getHeight() / defaultHeight);
+    panel.setTransform (juce::AffineTransform::scale (scale).translated (((float) getWidth() - defaultWidth * scale) / 2.0f,
+                                                                         ((float) getHeight() - defaultHeight * scale) / 2.0f));
 }
