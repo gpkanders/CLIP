@@ -13,12 +13,21 @@ ClipAudioProcessor::ClipAudioProcessor()
     threshold = apvts.getRawParameterValue (Parameters::threshold.getParamID());
     softness = apvts.getRawParameterValue (Parameters::softness.getParamID());
     outputGain = apvts.getRawParameterValue (Parameters::outputGain.getParamID());
+    oversampling = apvts.getRawParameterValue (Parameters::oversampling.getParamID());
+
+    startTimerHz (10);
 }
 
-void ClipAudioProcessor::prepareToPlay (double sampleRate, int)
+void ClipAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    oversampler.prepare (getTotalNumOutputChannels(), samplesPerBlock);
+    oversampler.setFactorIndex ((int) oversampling->load());
+
     clipper.setParameters (inputGain->load(), threshold->load(), softness->load(), outputGain->load());
-    clipper.prepare (sampleRate);
+    clipper.prepare (sampleRate * oversampler.getFactor());
+
+    pendingLatency = oversampler.getLatencySamples();
+    setLatencySamples (pendingLatency);
 }
 
 void ClipAudioProcessor::releaseResources()
@@ -41,8 +50,20 @@ void ClipAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     for (auto ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
         buffer.clear (ch, 0, buffer.getNumSamples());
 
+    if (const auto factorIndex = (int) oversampling->load(); factorIndex != oversampler.getFactorIndex())
+    {
+        oversampler.setFactorIndex (factorIndex);
+        clipper.prepare (getSampleRate() * oversampler.getFactor());
+        pendingLatency = oversampler.getLatencySamples();
+    }
+
     clipper.setParameters (inputGain->load(), threshold->load(), softness->load(), outputGain->load());
-    clipper.process (buffer);
+    oversampler.process (buffer, [this] (juce::dsp::AudioBlock<float> block) { clipper.process (block); });
+}
+
+void ClipAudioProcessor::timerCallback()
+{
+    setLatencySamples (pendingLatency);
 }
 
 juce::AudioProcessorEditor* ClipAudioProcessor::createEditor()

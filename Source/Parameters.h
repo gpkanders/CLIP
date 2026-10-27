@@ -10,6 +10,7 @@ namespace Parameters
     inline const juce::ParameterID outputGain { "outputGain", 1 };
     inline const juce::ParameterID mix { "mix", 1 };
     inline const juce::ParameterID bypass { "bypass", 1 };
+    inline const juce::ParameterID oversampling { "oversampling", 2 };
 
     inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     {
@@ -26,6 +27,7 @@ namespace Parameters
         layout.add (std::make_unique<AudioParameterFloat> (outputGain, "Output", juce::NormalisableRange (-24.0f, 24.0f, 0.01f), 0.0f, db));
         layout.add (std::make_unique<AudioParameterFloat> (mix, "Mix", juce::NormalisableRange (0.0f, 100.0f, 0.1f), 100.0f, percent));
         layout.add (std::make_unique<juce::AudioParameterBool> (bypass, "Bypass", false));
+        layout.add (std::make_unique<juce::AudioParameterChoice> (oversampling, "Oversampling", juce::StringArray { "Off", "2x", "4x", "8x", "16x" }, 2));
         return layout;
     }
 }

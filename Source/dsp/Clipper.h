@@ -1,5 +1,6 @@
 #pragma once
 #include "TransferCurves.h"
+#include <juce_dsp/juce_dsp.h>
 
 class Clipper
 {
@@ -23,19 +24,20 @@ public:
         outputGain.setTargetValue (juce::Decibels::decibelsToGain (outputGainDb));
     }
 
-    void process (juce::AudioBuffer<float>& buffer)
+    void process (juce::dsp::AudioBlock<float> block)
     {
-        auto* const* channels = buffer.getArrayOfWritePointers();
-
-        for (auto i = 0; i < buffer.getNumSamples(); ++i)
+        for (size_t i = 0; i < block.getNumSamples(); ++i)
         {
             const auto in = inputGain.getNextValue();
             const auto threshold = thresholdDb.getNextValue();
             const auto soft = softness.getNextValue();
             const auto out = outputGain.getNextValue();
 
-            for (auto ch = 0; ch < buffer.getNumChannels(); ++ch)
-                channels[ch][i] = TransferCurves::clip (channels[ch][i] * in, threshold, soft) * out;
+            for (size_t ch = 0; ch < block.getNumChannels(); ++ch)
+            {
+                auto* samples = block.getChannelPointer (ch);
+                samples[i] = TransferCurves::clip (samples[i] * in, threshold, soft) * out;
+            }
         }
     }
 
