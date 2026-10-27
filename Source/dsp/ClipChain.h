@@ -35,6 +35,8 @@ public:
             mixer->setWetMixProportion (wetProportion);
     }
 
+    void setShape (TransferCurves::Shape shape) { clipper.setShape (shape); }
+
     void process (juce::dsp::AudioBlock<float> block)
     {
         mixer->pushDrySamples (block);

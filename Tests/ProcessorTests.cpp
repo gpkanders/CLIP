@@ -60,6 +60,30 @@ public:
                 }
         });
 
+        beginTest("every shape keeps peaks at the threshold plus output gain");
+        {
+            const auto limit = juce::Decibels::decibelsToGain(thresholdDb + outputGainDb);
+            const auto input = sine(44100.0, 997.0, 0.9f, 44100 / 4);
+
+            for (auto shape = 0; shape < 6; ++shape)
+                for (auto factor = 0; factor < numFactors; ++factor)
+                {
+                    ClipAudioProcessor processor;
+                    setParameter(processor, Parameters::inputGain, 12.0f);
+                    setParameter(processor, Parameters::threshold, thresholdDb);
+                    setParameter(processor, Parameters::outputGain, outputGainDb);
+                    setParameter(processor, Parameters::softness, 50.0f);
+                    setParameter(processor, Parameters::shape, (float) shape);
+                    setParameter(processor, Parameters::oversampling, (float) factor);
+
+                    const auto output = render(processor, input, 44100.0, 512);
+                    const auto settled = juce::dsp::AudioBlock<const float>(output).getSubBlock((size_t) output.getNumSamples() / 2);
+                    const auto samplePeakDb = juce::Decibels::gainToDecibels(peak(settled) / limit);
+                    const auto setting = "shape " + juce::String(shape) + ", " + juce::String(1 << factor) + "x: " + juce::String(samplePeakDb, 2) + " dB";
+                    expect(samplePeakDb <= (factor == 0 ? 1.0e-4f : maxFilterOvershootDb), setting);
+                }
+        }
+
         beginTest("aliasing drops as the oversampling factor rises");
         forEachConfig([this](double sampleRate, int blockSize) {
             // Bin centered, so every harmonic and alias lands on a bin and leakage stays within a few bins

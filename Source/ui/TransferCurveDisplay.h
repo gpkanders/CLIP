@@ -15,20 +15,24 @@ public:
     explicit TransferCurveDisplay (juce::AudioProcessorValueTreeState& apvts)
         : threshold (*apvts.getRawParameterValue (Parameters::threshold.getParamID())),
           softness (*apvts.getRawParameterValue (Parameters::softness.getParamID())),
+          shape (*apvts.getRawParameterValue (Parameters::shape.getParamID())),
           shownThreshold (threshold.load()),
-          shownSoftness (softness.load())
+          shownSoftness (softness.load()),
+          shownShape (shape.load())
     {
     }
 
     // Rebuilds and repaints when the curve's parameters have moved. Returns whether they had.
     bool refresh()
     {
-        const auto newThreshold = threshold.load(), newSoftness = softness.load();
-        if (juce::exactlyEqual (newThreshold, shownThreshold) && juce::exactlyEqual (newSoftness, shownSoftness))
+        const auto newThreshold = threshold.load(), newSoftness = softness.load(), newShape = shape.load();
+        if (juce::exactlyEqual (newThreshold, shownThreshold) && juce::exactlyEqual (newSoftness, shownSoftness)
+            && juce::exactlyEqual (newShape, shownShape))
             return false;
 
         shownThreshold = newThreshold;
         shownSoftness = newSoftness;
+        shownShape = newShape;
         rebuild();
         return true;
     }
@@ -69,7 +73,7 @@ public:
 private:
     void rebuild()
     {
-        const TransferCurves::Knee shape (shownThreshold, shownSoftness);
+        const TransferCurves::Knee curveKnee (shownThreshold, shownSoftness, (TransferCurves::Shape) (int) shownShape);
 
         curve.clear();
         // One point per pixel
@@ -77,7 +81,7 @@ private:
         {
             const auto x = plot.getX() + (float) i;
             const auto inputDb = juce::jmap (x, plot.getX(), plot.getRight(), minDb, maxDb);
-            const auto outputDb = juce::Decibels::gainToDecibels (TransferCurves::clip (juce::Decibels::decibelsToGain (inputDb), shape), minDb);
+            const auto outputDb = juce::Decibels::gainToDecibels (TransferCurves::clip (juce::Decibels::decibelsToGain (inputDb), curveKnee), minDb);
             const juce::Point point (x, toY (outputDb));
 
             if (i == 0)
@@ -86,8 +90,9 @@ private:
                 curve.lineTo (point);
         }
 
-        const auto kneeStart = toX (juce::Decibels::gainToDecibels (shape.ceiling - shape.width / 2.0f, minDb));
-        const auto kneeEnd = toX (juce::Decibels::gainToDecibels (shape.ceiling + shape.width / 2.0f, minDb));
+        // Tanh never quite reaches the ceiling, so its knee runs off the right edge
+        const auto kneeStart = toX (juce::Decibels::gainToDecibels (curveKnee.start(), minDb));
+        const auto kneeEnd = std::isfinite (curveKnee.end()) ? toX (juce::Decibels::gainToDecibels (curveKnee.end(), minDb)) : plot.getRight();
         knee = juce::Rectangle<float>::leftTopRightBottom (kneeStart, plot.getY(), std::min (kneeEnd, plot.getRight()), plot.getBottom());
 
         repaint();
@@ -98,7 +103,8 @@ private:
 
     std::atomic<float>& threshold;
     std::atomic<float>& softness;
-    float shownThreshold, shownSoftness;
+    std::atomic<float>& shape;
+    float shownThreshold, shownSoftness, shownShape;
 
     juce::Rectangle<float> plot, knee;
     juce::Path curve;

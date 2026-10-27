@@ -45,6 +45,7 @@ set(SourceFiles
         Source/dsp/PeakFifo.h
         Source/dsp/TransferCurves.h
         Source/ui/ClipLookAndFeel.cpp
+        Source/ui/ChoiceBox.h
         Source/ui/ClipLookAndFeel.h
         Source/ui/Knob.h
         Source/ui/MainPanel.h

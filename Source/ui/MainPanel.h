@@ -1,4 +1,5 @@
 #pragma once
+#include "ChoiceBox.h"
 #include "Knob.h"
 #include "TransferCurveDisplay.h"
 #include "WaveformDisplay.h"
@@ -17,6 +18,8 @@ public:
           softnessKnob (apvts, Parameters::softness),
           outputKnob (apvts, Parameters::outputGain),
           mixKnob (apvts, Parameters::mix),
+          shapeBox (apvts, Parameters::shape),
+          oversamplingBox (apvts, Parameters::oversampling),
           bypassAttachment (apvts, Parameters::bypass.getParamID(), bypassButton),
           curveDisplay (apvts),
           waveformDisplay (apvts)
@@ -24,15 +27,7 @@ public:
         for (auto* knob : { &inputKnob, &thresholdKnob, &softnessKnob, &outputKnob, &mixKnob })
             addAndMakeVisible (knob);
 
-        // The attachment selects the current choice when it's created, so the items have to exist first
-        const auto& oversampling = *dynamic_cast<juce::AudioParameterChoice*> (apvts.getParameter (Parameters::oversampling.getParamID()));
-        oversamplingBox.addItemList (oversampling.choices, 1);
-        oversamplingAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (apvts, Parameters::oversampling.getParamID(), oversamplingBox);
-        oversamplingLabel.setText (oversampling.getName (32), juce::dontSendNotification);
-        oversamplingLabel.setFont (juce::FontOptions (15.0f, juce::Font::bold));
-        oversamplingLabel.setJustificationType (juce::Justification::centred);
-
-        addAndMakeVisible (oversamplingLabel);
+        addAndMakeVisible (shapeBox);
         addAndMakeVisible (oversamplingBox);
         addAndMakeVisible (bypassButton);
         addAndMakeVisible (curveDisplay);
@@ -58,10 +53,11 @@ public:
         bounds.removeFromRight (16);
         waveformDisplay.setBounds (bounds);
 
-        auto options = controls.removeFromRight (140).withSizeKeepingCentre (140, 100);
-        oversamplingLabel.setBounds (options.removeFromTop (24));
-        oversamplingBox.setBounds (options.removeFromTop (28));
-        options.removeFromTop (20);
+        auto options = controls.removeFromRight (140).withSizeKeepingCentre (140, 156);
+        shapeBox.setBounds (options.removeFromTop (52));
+        options.removeFromTop (12);
+        oversamplingBox.setBounds (options.removeFromTop (52));
+        options.removeFromTop (12);
         bypassButton.setBounds (options.removeFromTop (28));
 
         const auto knobWidth = controls.getWidth() / 5;
@@ -71,9 +67,7 @@ public:
 
 private:
     Knob inputKnob, thresholdKnob, softnessKnob, outputKnob, mixKnob;
-    juce::Label oversamplingLabel;
-    juce::ComboBox oversamplingBox;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> oversamplingAttachment;
+    ChoiceBox shapeBox, oversamplingBox;
     juce::ToggleButton bypassButton { "Bypass" };
     juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttachment;
 

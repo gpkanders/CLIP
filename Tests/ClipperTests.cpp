@@ -8,27 +8,27 @@ public:
     void runTest() override
     {
         beginTest("output never exceeds the ceiling");
-        forEachSetting([this](float thresholdDb, float softness) {
+        forEachSetting([this](Shape shape, float thresholdDb, float softness) {
             const auto ceiling = juce::Decibels::decibelsToGain(thresholdDb);
             for (auto x = -4.0f; x <= 4.0f; x += 0.001f)
-                expect(std::abs(TransferCurves::clip(x, thresholdDb, softness)) <= ceiling);
+                expect(std::abs(TransferCurves::clip(x, thresholdDb, softness, shape)) <= ceiling);
         });
 
         beginTest("unity gain below the knee");
-        forEachSetting([this](float thresholdDb, float softness) {
+        forEachSetting([this](Shape shape, float thresholdDb, float softness) {
             const auto kneeStart = juce::Decibels::decibelsToGain(thresholdDb) * (1.0f - softness / 200.0f);
             for (auto x = -kneeStart; x <= kneeStart; x += kneeStart / 100.0f + 1.0e-6f)
-                expectEquals(TransferCurves::clip(x, thresholdDb, softness), x);
+                expectEquals(TransferCurves::clip(x, thresholdDb, softness, shape), x);
         });
 
         beginTest("curve is continuous and monotonic");
-        forEachSetting([this](float thresholdDb, float softness) {
+        forEachSetting([this](Shape shape, float thresholdDb, float softness) {
             auto previousX = -2.0f;
-            auto previousY = TransferCurves::clip(previousX, thresholdDb, softness);
+            auto previousY = TransferCurves::clip(previousX, thresholdDb, softness, shape);
             for (auto i = 1; i <= 40000; ++i)
             {
                 const auto x = -2.0f + (float) i * 1.0e-4f;
-                const auto y = TransferCurves::clip(x, thresholdDb, softness);
+                const auto y = TransferCurves::clip(x, thresholdDb, softness, shape);
                 expect(y >= previousY);
                 expect(y - previousY <= (x - previousX) * 1.001f);
                 previousX = x;
@@ -36,17 +36,41 @@ public:
             }
         });
 
-        beginTest("softness 0 is a hard clip");
-        for (auto thresholdDb : thresholds)
-        {
+        beginTest("softness 0 is a hard clip, and hard ignores softness");
+        forEachSetting([this](Shape shape, float thresholdDb, float softness) {
+            if (shape != Shape::hard && softness > 0.0f)
+                return;
+
             const auto ceiling = juce::Decibels::decibelsToGain(thresholdDb);
             for (auto x = -4.0f; x <= 4.0f; x += 0.01f)
-                expectEquals(TransferCurves::clip(x, thresholdDb, 0.0f), juce::jlimit(-ceiling, ceiling, x));
+                expectEquals(TransferCurves::clip(x, thresholdDb, softness, shape), juce::jlimit(-ceiling, ceiling, x));
+        });
+
+        beginTest("shapes follow their curves one headroom past the knee start");
+        {
+            // Threshold 0 dB and softness 100% put the knee start at 0.5 with 0.5 of headroom, so x = 1 is u = 1
+            const std::pair<Shape, double> expected[] { { Shape::hard, 1.0 },
+                                                        { Shape::soft, 0.5 + 0.5 * 0.75 },
+                                                        { Shape::linear, 0.5 + 0.5 * 0.5 },
+                                                        { Shape::tanh, 0.5 + 0.5 * std::tanh(1.0) },
+                                                        { Shape::sine, 0.5 + 0.5 * std::sin(1.0) },
+                                                        { Shape::cubic, 0.5 + 0.5 * 23.0 / 27.0 } };
+            for (const auto& [shape, y] : expected)
+                expectWithinAbsoluteError((double) TransferCurves::clip(1.0f, 0.0f, 100.0f, shape), y, 1.0e-6, juce::String((int) shape));
         }
 
+        beginTest("each shape meets the ceiling where its knee ends");
+        forEachSetting([this](Shape shape, float thresholdDb, float softness) {
+            const TransferCurves::Knee knee(thresholdDb, softness, shape);
+            if (std::isfinite(knee.end()))
+                expectWithinAbsoluteError(TransferCurves::clip(knee.end() * 0.99999f, knee), knee.ceiling, knee.ceiling * 1.0e-4f);
+            else
+                expectWithinAbsoluteError(TransferCurves::clip(knee.start() + knee.headroom * 20.0f, knee), knee.ceiling, knee.ceiling * 1.0e-6f);
+        });
+
         beginTest("antiderivative integrates the curve");
-        forEachSetting([this](float thresholdDb, float softness) {
-            const TransferCurves::Knee knee(thresholdDb, softness);
+        forEachSetting([this](Shape shape, float thresholdDb, float softness) {
+            const TransferCurves::Knee knee(thresholdDb, softness, shape);
             const auto h = 1.0e-4;
             for (auto x = -2.0; x <= 2.0; x += 0.0101)
             {
@@ -56,8 +80,8 @@ public:
         });
 
         beginTest("antialiased clip stays bounded and handles equal samples");
-        forEachSetting([this](float thresholdDb, float softness) {
-            const TransferCurves::Knee knee(thresholdDb, softness);
+        forEachSetting([this](Shape shape, float thresholdDb, float softness) {
+            const TransferCurves::Knee knee(thresholdDb, softness, shape);
             for (auto x = -4.0f; x <= 4.0f; x += 0.01f)
             {
                 expectEquals(TransferCurves::clipAntialiased(x, x, knee), TransferCurves::clip(x, knee));
@@ -66,6 +90,35 @@ public:
                 expect(std::abs(TransferCurves::clipAntialiased(x, -x * 0.5f, knee)) <= knee.ceiling * 1.0001f);
             }
         });
+
+        beginTest("switching shape crossfades instead of jumping");
+        {
+            constexpr auto sampleRate = 48000.0;
+            const auto rampSamples = (int) (sampleRate * Clipper::smoothingSeconds);
+            Clipper switched, hard, cubic;
+            for (auto* clipper : { &switched, &hard, &cubic })
+            {
+                clipper->setParameters(0.0f, -6.0f, 100.0f, 0.0f);
+                clipper->setShape(clipper == &cubic ? Shape::cubic : Shape::hard);
+                clipper->prepare(sampleRate);
+            }
+
+            switched.setShape(Shape::cubic);
+            juce::AudioBuffer<float> a(1, rampSamples * 2), b(1, rampSamples * 2), c(1, rampSamples * 2);
+            for (auto i = 0; i < a.getNumSamples(); ++i)
+                for (auto* buffer : { &a, &b, &c })
+                    buffer->setSample(0, i, 0.45f * std::cos(0.01f * (float) i));
+
+            switched.process(a);
+            hard.process(b);
+            cubic.process(c);
+
+            // Starts on a peak inside the knee, where hard (0.45) and cubic (0.431) differ
+            expect(std::abs(b.getSample(0, 0) - c.getSample(0, 0)) > 0.01f);
+            expectWithinAbsoluteError(a.getSample(0, 0), b.getSample(0, 0), 1.0e-3f);
+            for (auto i = rampSamples; i < a.getNumSamples(); ++i)
+                expectWithinAbsoluteError(a.getSample(0, i), c.getSample(0, i), 1.0e-6f);
+        }
 
         beginTest("applies input gain, curve, then output gain");
         {
@@ -121,15 +174,18 @@ public:
     }
 
 private:
+    using Shape = TransferCurves::Shape;
+    static constexpr Shape shapes[] { Shape::hard, Shape::soft, Shape::linear, Shape::tanh, Shape::sine, Shape::cubic };
     static constexpr float thresholds[] { -36.0f, -12.0f, -6.0f, 0.0f };
     static constexpr float softnesses[] { 0.0f, 10.0f, 50.0f, 100.0f };
 
     template <typename Fn>
     void forEachSetting(Fn&& fn)
     {
-        for (auto thresholdDb : thresholds)
-            for (auto softness : softnesses)
-                fn(thresholdDb, softness);
+        for (auto shape : shapes)
+            for (auto thresholdDb : thresholds)
+                for (auto softness : softnesses)
+                    fn(shape, thresholdDb, softness);
     }
 };
 
