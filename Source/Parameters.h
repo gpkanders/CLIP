@@ -17,7 +17,10 @@ namespace Parameters
         using juce::AudioParameterFloat;
         using juce::AudioParameterFloatAttributes;
 
-        const auto db = AudioParameterFloatAttributes().withLabel ("dB");
+        // Snapping to the interval leaves float error around 0, which would read as "-0.00"
+        const auto db = AudioParameterFloatAttributes().withLabel ("dB").withStringFromValueFunction ([] (float value, int) {
+            return juce::String (std::abs (value) < 0.005f ? 0.0f : value, 2);
+        });
         const auto percent = AudioParameterFloatAttributes().withLabel ("%");
 
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
