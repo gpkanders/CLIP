@@ -9,6 +9,10 @@ ClipAudioProcessor::ClipAudioProcessor()
       apvts (*this, nullptr, "Parameters", Parameters::createLayout())
 {
     bypass = dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (Parameters::bypass.getParamID()));
+    inputGain = apvts.getRawParameterValue (Parameters::inputGain.getParamID());
+    threshold = apvts.getRawParameterValue (Parameters::threshold.getParamID());
+    softness = apvts.getRawParameterValue (Parameters::softness.getParamID());
+    outputGain = apvts.getRawParameterValue (Parameters::outputGain.getParamID());
 }
 
 void ClipAudioProcessor::prepareToPlay (double, int)
@@ -34,6 +38,9 @@ void ClipAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
 
     for (auto ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
         buffer.clear (ch, 0, buffer.getNumSamples());
+
+    clipper.setParameters (inputGain->load(), threshold->load(), softness->load(), outputGain->load());
+    clipper.process (buffer);
 }
 
 juce::AudioProcessorEditor* ClipAudioProcessor::createEditor()

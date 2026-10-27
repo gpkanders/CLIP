@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "dsp/Clipper.h"
 
 class ClipAudioProcessor : public juce::AudioProcessor
 {
@@ -35,6 +36,12 @@ public:
 
 private:
     juce::AudioParameterBool* bypass = nullptr;
+    std::atomic<float>* inputGain = nullptr;
+    std::atomic<float>* threshold = nullptr;
+    std::atomic<float>* softness = nullptr;
+    std::atomic<float>* outputGain = nullptr;
+
+    Clipper clipper;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ClipAudioProcessor)
 };
