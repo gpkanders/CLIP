@@ -31,13 +31,17 @@ public:
             auto previous = 0.0f;
             for (auto i = 0; i < Oversampler::numFactors; ++i)
             {
-                const auto aliasingDb = measureAliasingDb(i);
+                const auto aliasingDb = measureAliasingDb(i, false);
                 logMessage("factor " + juce::String(1 << i) + "x: aliasing " + juce::String(aliasingDb, 1) + " dB");
                 if (i > 0)
                     expect(aliasingDb < previous - 3.0f);
                 previous = aliasingDb;
             }
         }
+
+        beginTest("antialiasing lowers aliasing at every factor");
+        for (auto i = 0; i < 4; ++i)
+            expect(measureAliasingDb(i, true) < measureAliasingDb(i, false) - 5.0f, juce::String(1 << i) + "x");
 
         beginTest("switching factors does not allocate");
         {
@@ -51,6 +55,7 @@ public:
             for (auto i : { 2, 4, 0, 1, 3 })
             {
                 oversampler.setFactorIndex(i);
+                clipper.setAntialiasing(i > 0);
                 clipper.prepare(sampleRate * oversampler.getFactor());
                 oversampler.process(buffer, [&](juce::dsp::AudioBlock<float> block) { clipper.process(block); });
             }
@@ -65,13 +70,14 @@ private:
     static constexpr int sineBin = 1301; // odd, so aliases never land on a harmonic bin
 
     // Hard clips a bin centred sine and returns the power outside the harmonic bins relative to the total
-    static float measureAliasingDb(int factorIndex)
+    static float measureAliasingDb(int factorIndex, bool antialiasing)
     {
         Oversampler oversampler;
         oversampler.prepare(1, blockSize);
         oversampler.setFactorIndex(factorIndex);
 
         Clipper clipper;
+        clipper.setAntialiasing(antialiasing);
         clipper.setParameters(12.0f, -6.0f, 0.0f, 0.0f);
         clipper.prepare(sampleRate * oversampler.getFactor());
 
