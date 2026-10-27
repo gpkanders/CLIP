@@ -1,5 +1,6 @@
 #pragma once
 #include "Knob.h"
+#include "TransferCurveDisplay.h"
 #include "../Parameters.h"
 
 // Every control, laid out at a fixed size. The editor scales it to fit the window.
@@ -15,7 +16,8 @@ public:
           softnessKnob (apvts, Parameters::softness),
           outputKnob (apvts, Parameters::outputGain),
           mixKnob (apvts, Parameters::mix),
-          bypassAttachment (apvts, Parameters::bypass.getParamID(), bypassButton)
+          bypassAttachment (apvts, Parameters::bypass.getParamID(), bypassButton),
+          curveDisplay (apvts)
     {
         for (auto* knob : { &inputKnob, &thresholdKnob, &softnessKnob, &outputKnob, &mixKnob })
             addAndMakeVisible (knob);
@@ -30,6 +32,7 @@ public:
         addAndMakeVisible (oversamplingLabel);
         addAndMakeVisible (oversamplingBox);
         addAndMakeVisible (bypassButton);
+        addAndMakeVisible (curveDisplay);
         setSize (width, height);
     }
 
@@ -39,8 +42,7 @@ public:
         g.fillAll (background);
 
         g.setColour (background.darker (0.3f));
-        for (const auto& area : { waveformArea, curveArea })
-            g.fillRoundedRectangle (area.toFloat(), 6.0f);
+        g.fillRoundedRectangle (waveformArea.toFloat(), 6.0f);
     }
 
     void resized() override
@@ -49,7 +51,7 @@ public:
         auto controls = bounds.removeFromBottom (170);
         bounds.removeFromBottom (16);
 
-        curveArea = bounds.removeFromRight (bounds.getHeight());
+        curveDisplay.setBounds (bounds.removeFromRight (bounds.getHeight()));
         bounds.removeFromRight (16);
         waveformArea = bounds;
 
@@ -72,6 +74,8 @@ private:
     juce::ToggleButton bypassButton { "Bypass" };
     juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttachment;
 
-    // Kept clear for the waveform and transfer curve displays
-    juce::Rectangle<int> waveformArea, curveArea;
+    TransferCurveDisplay curveDisplay;
+
+    // Kept clear for the waveform display
+    juce::Rectangle<int> waveformArea;
 };

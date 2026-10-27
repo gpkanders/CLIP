@@ -46,6 +46,7 @@ set(SourceFiles
         Source/dsp/TransferCurves.h
         Source/ui/Knob.h
         Source/ui/MainPanel.h
+        Source/ui/TransferCurveDisplay.h
 )
 
 juce_add_plugin(CLIP
@@ -100,6 +101,7 @@ target_sources(CLIPTests PRIVATE
         Tests/ProcessorTests.cpp
         Tests/PeakFifoTests.cpp
         Tests/EditorTests.cpp
+        Tests/TransferCurveDisplayTests.cpp
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
 )
