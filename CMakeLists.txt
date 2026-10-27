@@ -40,6 +40,7 @@ set(SourceFiles
         Source/PluginProcessor.cpp
         Source/PluginProcessor.h
         Source/dsp/Clipper.h
+        Source/dsp/Oversampler.h
         Source/dsp/TransferCurves.h
 )
 
@@ -90,6 +91,7 @@ target_sources(CLIPTests PRIVATE
         Tests/TestMain.cpp
         Tests/ParametersTests.cpp
         Tests/ClipperTests.cpp
+        Tests/OversamplerTests.cpp
 )
 target_include_directories(CLIPTests PRIVATE Source)
 target_compile_definitions(CLIPTests PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0

@@ -12,10 +12,10 @@ public:
         juce::AudioProcessorValueTreeState apvts (processor, nullptr, "Parameters", Parameters::createLayout());
 
         for (const auto& id : { Parameters::inputGain, Parameters::threshold, Parameters::softness,
-                                Parameters::outputGain, Parameters::mix, Parameters::bypass })
+                                Parameters::outputGain, Parameters::mix, Parameters::bypass, Parameters::oversampling })
             expect(apvts.getParameter(id.getParamID()) != nullptr, id.getParamID());
 
-        expectEquals(processor.getParameters().size(), 6);
+        expectEquals(processor.getParameters().size(), 7);
 
         beginTest("defaults are transparent");
         expectWithinAbsoluteError(apvts.getRawParameterValue(Parameters::inputGain.getParamID())->load(), 0.0f, 1.0e-4f);

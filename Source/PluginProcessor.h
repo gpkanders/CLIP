@@ -1,8 +1,10 @@
 #pragma once
 #include <JuceHeader.h>
 #include "dsp/Clipper.h"
+#include "dsp/Oversampler.h"
 
-class ClipAudioProcessor : public juce::AudioProcessor
+class ClipAudioProcessor : public juce::AudioProcessor,
+                           private juce::Timer
 {
 public:
     ClipAudioProcessor();
@@ -35,13 +37,20 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
 private:
+    void timerCallback() override;
+
     juce::AudioParameterBool* bypass = nullptr;
     std::atomic<float>* inputGain = nullptr;
     std::atomic<float>* threshold = nullptr;
     std::atomic<float>* softness = nullptr;
     std::atomic<float>* outputGain = nullptr;
+    std::atomic<float>* oversampling = nullptr;
 
     Clipper clipper;
+    Oversampler oversampler;
+
+    // Written on the audio thread, reported to the host from the message thread
+    std::atomic<int> pendingLatency { 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ClipAudioProcessor)
 };
