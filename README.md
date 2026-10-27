@@ -27,4 +27,4 @@ open build-xcode/CLIP.xcodeproj
 ./build/CLIPTests_artefacts/Debug/CLIPTests
 ```
 
-CI runs the unit tests, pluginval (strictness 10) and auval on every PR.
+CI runs the unit tests, pluginval (strictness 10) and auval. It's manual only: Actions tab > Build > Run workflow.
