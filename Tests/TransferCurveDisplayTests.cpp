@@ -28,6 +28,30 @@ public:
             setParameter(processor, id, 6.0f);
             expect(! display.refresh(), id.getParamID());
         }
+
+        beginTest("every shape draws a visibly different curve at the default knee");
+        {
+            std::vector<juce::Image> snapshots;
+            for (auto shape = 0; shape < 6; ++shape)
+            {
+                ClipAudioProcessor shaped;
+                setParameter(shaped, Parameters::shape, (float) shape);
+                TransferCurveDisplay shown(shaped.apvts);
+                shown.setSize(768, 298);
+                snapshots.push_back(shown.createComponentSnapshot(shown.getLocalBounds()));
+            }
+
+            for (size_t a = 0; a < snapshots.size(); ++a)
+                for (auto b = a + 1; b < snapshots.size(); ++b)
+                {
+                    auto differing = 0;
+                    for (auto y = 0; y < snapshots[a].getHeight(); ++y)
+                        for (auto x = 0; x < snapshots[a].getWidth(); ++x)
+                            differing += snapshots[a].getPixelAt(x, y) != snapshots[b].getPixelAt(x, y) ? 1 : 0;
+
+                    expect(differing > 200, "shapes " + juce::String(a) + " and " + juce::String(b) + ": " + juce::String(differing) + " pixels differ");
+                }
+        }
     }
 
 private:

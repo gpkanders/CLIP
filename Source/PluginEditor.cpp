@@ -3,7 +3,7 @@
 ClipAudioProcessorEditor::ClipAudioProcessorEditor (ClipAudioProcessor& p)
     : AudioProcessorEditor (&p), clipProcessor (p), panel (p.apvts)
 {
-    clipProcessor.peakFifo.discard();
+    clipProcessor.tap.discard();
     addAndMakeVisible (panel);
 
     // After adding the panel, so the change reaches its sliders, which copy colours into their text boxes
@@ -24,10 +24,10 @@ ClipAudioProcessorEditor::~ClipAudioProcessorEditor()
     setLookAndFeel (nullptr);
 }
 
-void ClipAudioProcessorEditor::drainPeaks()
+void ClipAudioProcessorEditor::drainSamples()
 {
-    const auto numPeaks = clipProcessor.peakFifo.pop (newPeaks.data(), (int) newPeaks.size());
-    panel.showPeaks (newPeaks.data(), numPeaks);
+    const auto numSamples = clipProcessor.tap.pop (newSamples.data(), (int) newSamples.size());
+    panel.showSamples (newSamples.data(), numSamples, clipProcessor.tap.sampleRate);
 }
 
 void ClipAudioProcessorEditor::paint (juce::Graphics& g)

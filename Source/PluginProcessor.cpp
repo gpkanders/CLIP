@@ -27,11 +27,7 @@ void ClipAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     setChainParameters (bypass->get());
     chain.prepare (sampleRate, getTotalNumOutputChannels(), samplesPerBlock, (int) oversampling->load());
-
-    inputDelay.setMaximumDelayInSamples (chain.getMaxLatencySamples());
-    inputDelay.prepare ({ sampleRate, (juce::uint32) samplesPerBlock, (juce::uint32) getTotalNumOutputChannels() });
-    delayedInput.setSize (getTotalNumOutputChannels(), samplesPerBlock);
-    peakFifo.prepare (sampleRate);
+    tap.prepare (sampleRate, samplesPerBlock);
 
     pendingLatency = chain.getLatencySamples();
     setLatencySamples (pendingLatency);
@@ -72,12 +68,8 @@ void ClipAudioProcessor::process (juce::AudioBuffer<float>& buffer, bool bypasse
     setChainParameters (bypassed);
 
     juce::dsp::AudioBlock<float> block (buffer);
-    auto delayed = juce::dsp::AudioBlock<float> (delayedInput).getSubBlock (0, block.getNumSamples());
-    inputDelay.setDelay ((float) chain.getLatencySamples());
-    inputDelay.process (juce::dsp::ProcessContextNonReplacing<float> (block, delayed));
-
+    tap.push (block);
     chain.process (block);
-    peakFifo.push (delayed, block);
 
     pendingLatency = chain.getLatencySamples();
 }
@@ -87,6 +79,7 @@ void ClipAudioProcessor::setChainParameters (bool bypassed)
     chain.setParameters (inputGain->load(), threshold->load(), softness->load(), outputGain->load(), mix->load(), bypassed);
     chain.setShape ((TransferCurves::Shape) (int) shape->load());
     chain.setDetail (detail->load());
+    tap.setParameters (inputGain->load(), threshold->load(), softness->load(), (TransferCurves::Shape) (int) shape->load(), detail->load());
 }
 
 void ClipAudioProcessor::timerCallback()

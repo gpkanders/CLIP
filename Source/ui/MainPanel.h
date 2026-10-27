@@ -1,8 +1,8 @@
 #pragma once
 #include "ChoiceBox.h"
 #include "Knob.h"
+#include "Spectrogram.h"
 #include "TransferCurveDisplay.h"
-#include "WaveformDisplay.h"
 #include "../Parameters.h"
 
 // Every control, laid out at a fixed size. The editor scales it to fit the window.
@@ -22,8 +22,7 @@ public:
           shapeBox (apvts, Parameters::shape),
           oversamplingBox (apvts, Parameters::oversampling),
           bypassAttachment (apvts, Parameters::bypass.getParamID(), bypassButton),
-          curveDisplay (apvts),
-          waveformDisplay (apvts)
+          curveDisplay (apvts)
     {
         for (auto* knob : { &inputKnob, &thresholdKnob, &softnessKnob, &detailKnob, &outputKnob, &mixKnob })
             addAndMakeVisible (knob);
@@ -33,13 +32,14 @@ public:
         addAndMakeVisible (shapeBox);
         addAndMakeVisible (oversamplingBox);
         addAndMakeVisible (bypassButton);
+        // The curve over the spectrogram
+        addAndMakeVisible (spectrogram);
         addAndMakeVisible (curveDisplay);
-        addAndMakeVisible (waveformDisplay);
         setSize (width, height);
     }
 
-    // Called once per display frame with the peaks that arrived since the last one
-    void showPeaks (const PeakFifo::Frame* frames, int numFrames) { waveformDisplay.update (frames, numFrames); }
+    // Called once per display frame with the samples that arrived since the last one
+    void showSamples (const ClipTap::Frame* frames, int numFrames, double sampleRate) { spectrogram.update (frames, numFrames, sampleRate); }
 
     void paint (juce::Graphics& g) override
     {
@@ -52,9 +52,8 @@ public:
         auto controls = bounds.removeFromBottom (170);
         bounds.removeFromBottom (16);
 
-        curveDisplay.setBounds (bounds.removeFromRight (bounds.getHeight()));
-        bounds.removeFromRight (16);
-        waveformDisplay.setBounds (bounds);
+        spectrogram.setBounds (bounds);
+        curveDisplay.setBounds (bounds);
 
         auto options = controls.removeFromRight (140).withSizeKeepingCentre (140, 156);
         shapeBox.setBounds (options.removeFromTop (52));
@@ -74,6 +73,6 @@ private:
     juce::ToggleButton bypassButton { "Bypass" };
     juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttachment;
 
+    Spectrogram spectrogram;
     TransferCurveDisplay curveDisplay;
-    WaveformDisplay waveformDisplay;
 };

@@ -40,9 +40,9 @@ set(SourceFiles
         Source/PluginProcessor.cpp
         Source/PluginProcessor.h
         Source/dsp/ClipChain.h
+        Source/dsp/ClipTap.h
         Source/dsp/Clipper.h
         Source/dsp/Oversampler.h
-        Source/dsp/PeakFifo.h
         Source/dsp/TransferCurves.h
         Source/ui/ClipLookAndFeel.cpp
         Source/ui/ChoiceBox.h
@@ -50,7 +50,7 @@ set(SourceFiles
         Source/ui/Knob.h
         Source/ui/MainPanel.h
         Source/ui/TransferCurveDisplay.h
-        Source/ui/WaveformDisplay.h
+        Source/ui/Spectrogram.h
 )
 
 juce_add_plugin(CLIP
@@ -110,10 +110,10 @@ target_sources(CLIPTests PRIVATE
         Tests/OversamplerTests.cpp
         Tests/ClipChainTests.cpp
         Tests/ProcessorTests.cpp
-        Tests/PeakFifoTests.cpp
+        Tests/ClipTapTests.cpp
         Tests/EditorTests.cpp
         Tests/TransferCurveDisplayTests.cpp
-        Tests/WaveformDisplayTests.cpp
+        Tests/SpectrogramTests.cpp
         Tests/LookAndFeelTests.cpp
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
