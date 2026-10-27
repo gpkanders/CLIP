@@ -94,10 +94,13 @@ target_sources(CLIPTests PRIVATE
         Tests/ClipperTests.cpp
         Tests/OversamplerTests.cpp
         Tests/ClipChainTests.cpp
+        Tests/ProcessorTests.cpp
+        Source/PluginProcessor.cpp
+        Source/PluginEditor.cpp
 )
 target_include_directories(CLIPTests PRIVATE Source)
 target_compile_definitions(CLIPTests PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0
-        JUCE_ENABLE_ALLOCATION_HOOKS=1)
+        JUCE_ENABLE_ALLOCATION_HOOKS=1 JucePlugin_Name="CLIP")
 target_link_libraries(CLIPTests PRIVATE
         juce::juce_audio_processors
         juce::juce_dsp
