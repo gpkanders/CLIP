@@ -1,9 +1,8 @@
 name: Build
 
+# Manual only to save macOS Actions minutes: Actions tab > Build > Run workflow
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
