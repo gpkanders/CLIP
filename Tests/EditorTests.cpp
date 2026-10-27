@@ -77,8 +77,11 @@ public:
             ClipAudioProcessor processor;
             const auto editor = createEditor(processor);
 
-            auto* box = findAll<juce::ComboBox>(*editor).front();
-            box->setSelectedItemIndex(4, juce::sendNotificationSync);
+            const auto boxes = findAll<juce::ComboBox>(*editor);
+            expectEquals((int) boxes.size(), 2);
+            boxes[0]->setSelectedItemIndex(3, juce::sendNotificationSync);
+            expectEquals((int) processor.apvts.getRawParameterValue(Parameters::shape.getParamID())->load(), 3);
+            boxes[1]->setSelectedItemIndex(4, juce::sendNotificationSync);
             expectEquals((int) processor.apvts.getRawParameterValue(Parameters::oversampling.getParamID())->load(), 4);
 
             auto* button = findAll<juce::ToggleButton>(*editor).front();

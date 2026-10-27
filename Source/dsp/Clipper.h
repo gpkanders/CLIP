@@ -14,6 +14,7 @@ public:
         thresholdDb.reset (sampleRate, smoothingSeconds);
         softness.reset (sampleRate, smoothingSeconds);
         outputGain.reset (sampleRate, smoothingSeconds);
+        shapeFade.reset (sampleRate, smoothingSeconds);
         previousInput.fill (0.0f);
     }
 
@@ -29,6 +30,18 @@ public:
         outputGain.setTargetValue (juce::Decibels::decibelsToGain (outputGainDb));
     }
 
+    // Switching crossfades from the old shape over the smoothing time, so it doesn't click
+    void setShape (TransferCurves::Shape newShape)
+    {
+        if (newShape == shape)
+            return;
+
+        previousShape = shape;
+        shape = newShape;
+        shapeFade.setCurrentAndTargetValue (0.0f);
+        shapeFade.setTargetValue (1.0f);
+    }
+
     void process (juce::dsp::AudioBlock<float> block)
     {
         jassert (block.getNumChannels() <= previousInput.size());
@@ -36,24 +49,38 @@ public:
         for (size_t i = 0; i < block.getNumSamples(); ++i)
         {
             const auto in = inputGain.getNextValue();
-            const TransferCurves::Knee knee (thresholdDb.getNextValue(), softness.getNextValue());
+            const auto threshold = thresholdDb.getNextValue(), soft = softness.getNextValue();
+            const TransferCurves::Knee knee (threshold, soft, shape), fadingFrom (threshold, soft, previousShape);
+            const auto fade = shapeFade.getNextValue();
             const auto out = outputGain.getNextValue();
 
             for (size_t ch = 0; ch < block.getNumChannels(); ++ch)
             {
                 auto* samples = block.getChannelPointer (ch);
                 const auto x = samples[i] * in;
-                samples[i] = (antialiasing ? TransferCurves::clipAntialiased (x, previousInput[ch], knee) : TransferCurves::clip (x, knee)) * out;
+                auto y = curve (x, previousInput[ch], knee);
+
+                if (fade < 1.0f)
+                    y += (curve (x, previousInput[ch], fadingFrom) - y) * (1.0f - fade);
+
+                samples[i] = y * out;
                 previousInput[ch] = x;
             }
         }
     }
 
 private:
+    float curve (float x, float previousX, TransferCurves::Knee knee) const
+    {
+        return antialiasing ? TransferCurves::clipAntialiased (x, previousX, knee) : TransferCurves::clip (x, knee);
+    }
+
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> inputGain;
     juce::SmoothedValue<float> thresholdDb;
     juce::SmoothedValue<float> softness;
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> outputGain;
+    juce::SmoothedValue<float> shapeFade { 1.0f };
+    TransferCurves::Shape shape = TransferCurves::Shape::soft, previousShape = TransferCurves::Shape::soft;
     std::array<float, 2> previousInput {};
     bool antialiasing = false;
 };

@@ -8,14 +8,15 @@ public:
 
     void runTest() override
     {
-        beginTest("redraws only when threshold or softness change");
+        beginTest("redraws only when threshold, softness or shape change");
         ClipAudioProcessor processor;
         TransferCurveDisplay display(processor.apvts);
         display.setSize(300, 300);
 
         expect(! display.refresh());
 
-        for (const auto& [id, value] : { std::pair { Parameters::threshold, -12.0f }, std::pair { Parameters::softness, 50.0f } })
+        for (const auto& [id, value] : { std::pair { Parameters::threshold, -12.0f }, std::pair { Parameters::softness, 50.0f },
+                                          std::pair { Parameters::shape, 3.0f } })
         {
             setParameter(processor, id, value);
             expect(display.refresh(), id.getParamID());

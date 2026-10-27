@@ -26,8 +26,8 @@ public:
             }
         });
 
-        // A name and a readout per knob, the oversampling label and the combo box's text
-        expectEquals(numLabels, 5 * 2 + 2);
+        // A name and a readout per knob, and a name and the selected text for the shape and oversampling boxes
+        expectEquals(numLabels, 5 * 2 + 2 * 2);
     }
 
 private:
