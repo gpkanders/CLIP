@@ -1,6 +1,7 @@
 #pragma once
 #include "Knob.h"
 #include "TransferCurveDisplay.h"
+#include "WaveformDisplay.h"
 #include "../Parameters.h"
 
 // Every control, laid out at a fixed size. The editor scales it to fit the window.
@@ -17,7 +18,8 @@ public:
           outputKnob (apvts, Parameters::outputGain),
           mixKnob (apvts, Parameters::mix),
           bypassAttachment (apvts, Parameters::bypass.getParamID(), bypassButton),
-          curveDisplay (apvts)
+          curveDisplay (apvts),
+          waveformDisplay (apvts)
     {
         for (auto* knob : { &inputKnob, &thresholdKnob, &softnessKnob, &outputKnob, &mixKnob })
             addAndMakeVisible (knob);
@@ -33,16 +35,16 @@ public:
         addAndMakeVisible (oversamplingBox);
         addAndMakeVisible (bypassButton);
         addAndMakeVisible (curveDisplay);
+        addAndMakeVisible (waveformDisplay);
         setSize (width, height);
     }
 
+    // Called once per display frame with the peaks that arrived since the last one
+    void showPeaks (const PeakFifo::Frame* frames, int numFrames) { waveformDisplay.update (frames, numFrames); }
+
     void paint (juce::Graphics& g) override
     {
-        const auto background = getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId);
-        g.fillAll (background);
-
-        g.setColour (background.darker (0.3f));
-        g.fillRoundedRectangle (waveformArea.toFloat(), 6.0f);
+        g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
     }
 
     void resized() override
@@ -53,7 +55,7 @@ public:
 
         curveDisplay.setBounds (bounds.removeFromRight (bounds.getHeight()));
         bounds.removeFromRight (16);
-        waveformArea = bounds;
+        waveformDisplay.setBounds (bounds);
 
         auto options = controls.removeFromRight (140).withSizeKeepingCentre (140, 100);
         oversamplingLabel.setBounds (options.removeFromTop (24));
@@ -75,7 +77,5 @@ private:
     juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttachment;
 
     TransferCurveDisplay curveDisplay;
-
-    // Kept clear for the waveform display
-    juce::Rectangle<int> waveformArea;
+    WaveformDisplay waveformDisplay;
 };

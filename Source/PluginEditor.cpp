@@ -16,10 +16,10 @@ ClipAudioProcessorEditor::ClipAudioProcessorEditor (ClipAudioProcessor& p)
     setSize (width, width * defaultHeight / defaultWidth);
 }
 
-// Drains every frame so the FIFO keeps flowing while the editor is open; the waveform display will draw these
 void ClipAudioProcessorEditor::drainPeaks()
 {
-    numNewPeaks = clipProcessor.peakFifo.pop (newPeaks.data(), (int) newPeaks.size());
+    const auto numPeaks = clipProcessor.peakFifo.pop (newPeaks.data(), (int) newPeaks.size());
+    panel.showPeaks (newPeaks.data(), numPeaks);
 }
 
 // Scaling the whole panel keeps text, strokes and hit areas in proportion at any size
