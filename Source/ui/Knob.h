@@ -16,6 +16,7 @@ public:
         slider.setDoubleClickReturnValue (true, parameter.convertFrom0to1 (parameter.getDefaultValue()));
 
         label.setText (parameter.getName (32), juce::dontSendNotification);
+        label.setFont (juce::FontOptions (15.0f, juce::Font::bold));
         label.setJustificationType (juce::Justification::centred);
 
         addAndMakeVisible (label);

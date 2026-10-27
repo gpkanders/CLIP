@@ -1,5 +1,6 @@
 #pragma once
 #include "PluginProcessor.h"
+#include "ui/ClipLookAndFeel.h"
 #include "ui/MainPanel.h"
 
 class ClipAudioProcessorEditor : public juce::AudioProcessorEditor
@@ -9,6 +10,7 @@ public:
     static constexpr int defaultHeight = MainPanel::height;
 
     explicit ClipAudioProcessorEditor (ClipAudioProcessor&);
+    ~ClipAudioProcessorEditor() override;
 
     void resized() override;
 
@@ -16,6 +18,7 @@ private:
     void drainPeaks();
 
     ClipAudioProcessor& clipProcessor;
+    ClipLookAndFeel lookAndFeel;
     MainPanel panel;
 
     std::array<PeakFifo::Frame, PeakFifo::capacity> newPeaks;

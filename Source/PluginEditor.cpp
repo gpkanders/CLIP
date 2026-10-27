@@ -6,6 +6,9 @@ ClipAudioProcessorEditor::ClipAudioProcessorEditor (ClipAudioProcessor& p)
     clipProcessor.peakFifo.discard();
     addAndMakeVisible (panel);
 
+    // After adding the panel, so the change reaches its sliders, which copy colours into their text boxes
+    setLookAndFeel (&lookAndFeel);
+
     // Read the saved width first: setResizeLimits resizes straight away, and resized() saves the width
     const auto minWidth = defaultWidth * 3 / 4, maxWidth = defaultWidth * 2;
     const auto width = clipProcessor.editorWidth > 0 ? juce::jlimit (minWidth, maxWidth, clipProcessor.editorWidth.load()) : defaultWidth;
@@ -14,6 +17,11 @@ ClipAudioProcessorEditor::ClipAudioProcessorEditor (ClipAudioProcessor& p)
     setResizeLimits (minWidth, defaultHeight * 3 / 4, maxWidth, defaultHeight * 2);
     getConstrainer()->setFixedAspectRatio ((double) defaultWidth / defaultHeight);
     setSize (width, width * defaultHeight / defaultWidth);
+}
+
+ClipAudioProcessorEditor::~ClipAudioProcessorEditor()
+{
+    setLookAndFeel (nullptr);
 }
 
 void ClipAudioProcessorEditor::drainPeaks()
