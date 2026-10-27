@@ -1,0 +1,12 @@
+# Close to the JUCE coding standard
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 0
+BreakBeforeBraces: Allman
+SpaceBeforeParens: NonEmptyParentheses
+PointerAlignment: Left
+AccessModifierOffset: -4
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+NamespaceIndentation: All
+SortIncludes: Never
