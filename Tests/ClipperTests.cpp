@@ -16,7 +16,7 @@ public:
 
         beginTest("unity gain below the knee");
         forEachSetting([this](Shape shape, float thresholdDb, float softness) {
-            const auto kneeStart = juce::Decibels::decibelsToGain(thresholdDb) * (1.0f - softness / 200.0f);
+            const auto kneeStart = juce::Decibels::decibelsToGain(thresholdDb) * (1.0f - softness / 100.0f);
             for (auto x = -kneeStart; x <= kneeStart; x += kneeStart / 100.0f + 1.0e-6f)
                 expectEquals(TransferCurves::clip(x, thresholdDb, softness, shape), x);
         });
@@ -48,7 +48,7 @@ public:
 
         beginTest("shapes follow their curves one headroom past the knee start");
         {
-            // Threshold 0 dB and softness 100% put the knee start at 0.5 with 0.5 of headroom, so x = 1 is u = 1
+            // Threshold 0 dB and softness 50% put the knee start at 0.5 with 0.5 of headroom, so x = 1 is u = 1
             const std::pair<Shape, double> expected[] { { Shape::hard, 1.0 },
                                                         { Shape::soft, 0.5 + 0.5 * 0.75 },
                                                         { Shape::linear, 0.5 + 0.5 * 0.5 },
@@ -56,7 +56,7 @@ public:
                                                         { Shape::sine, 0.5 + 0.5 * std::sin(1.0) },
                                                         { Shape::cubic, 0.5 + 0.5 * 23.0 / 27.0 } };
             for (const auto& [shape, y] : expected)
-                expectWithinAbsoluteError((double) TransferCurves::clip(1.0f, 0.0f, 100.0f, shape), y, 1.0e-6, juce::String((int) shape));
+                expectWithinAbsoluteError((double) TransferCurves::clip(1.0f, 0.0f, 50.0f, shape), y, 1.0e-6, juce::String((int) shape));
         }
 
         beginTest("each shape meets the ceiling where its knee ends");

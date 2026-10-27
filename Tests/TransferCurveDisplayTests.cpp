@@ -15,7 +15,7 @@ public:
 
         expect(! display.refresh());
 
-        for (const auto& [id, value] : { std::pair { Parameters::threshold, -12.0f }, std::pair { Parameters::softness, 50.0f },
+        for (const auto& [id, value] : { std::pair { Parameters::threshold, -12.0f }, std::pair { Parameters::softness, 25.0f },
                                           std::pair { Parameters::shape, 3.0f } })
         {
             setParameter(processor, id, value);
