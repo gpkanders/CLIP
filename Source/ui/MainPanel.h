@@ -29,6 +29,7 @@ public:
         oversamplingBox.addItemList (oversampling.choices, 1);
         oversamplingAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (apvts, Parameters::oversampling.getParamID(), oversamplingBox);
         oversamplingLabel.setText (oversampling.getName (32), juce::dontSendNotification);
+        oversamplingLabel.setFont (juce::FontOptions (15.0f, juce::Font::bold));
         oversamplingLabel.setJustificationType (juce::Justification::centred);
 
         addAndMakeVisible (oversamplingLabel);

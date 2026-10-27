@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "ClipLookAndFeel.h"
 #include "../Parameters.h"
 #include "../dsp/PeakFifo.h"
 
@@ -40,21 +41,16 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        const auto& lookAndFeel = getLookAndFeel();
-        const auto background = lookAndFeel.findColour (juce::ResizableWindow::backgroundColourId);
-        const auto text = lookAndFeel.findColour (juce::Label::textColourId);
-        const auto accent = lookAndFeel.findColour (juce::Slider::thumbColourId);
-
-        g.fillAll (background);
-        g.setColour (background.darker (0.3f));
+        g.fillAll (Palette::background);
+        g.setColour (Palette::display);
         g.fillRoundedRectangle (getLocalBounds().toFloat(), 6.0f);
 
-        g.setColour (juce::Colours::orangered);
+        g.setColour (Palette::clip);
         g.fillRectList (clippedColumns);
-        g.setColour (accent);
+        g.setColour (Palette::accent);
         g.fillRectList (outputColumns);
 
-        g.setColour (text.withAlpha (0.5f));
+        g.setColour (Palette::text.withAlpha (0.5f));
         const float dashes[] = { 4.0f, 4.0f };
         for (auto y : { thresholdBand.getY(), thresholdBand.getBottom() })
             g.drawDashedLine ({ plot.getX(), y, plot.getRight(), y }, dashes, 2);

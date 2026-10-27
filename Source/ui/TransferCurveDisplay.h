@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "ClipLookAndFeel.h"
 #include "../Parameters.h"
 #include "../dsp/TransferCurves.h"
 
@@ -34,32 +35,28 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        const auto& lookAndFeel = getLookAndFeel();
-        const auto text = lookAndFeel.findColour (juce::Label::textColourId);
-        const auto accent = lookAndFeel.findColour (juce::Slider::thumbColourId);
-
-        g.setColour (lookAndFeel.findColour (juce::ResizableWindow::backgroundColourId).darker (0.3f));
+        g.setColour (Palette::display);
         g.fillRoundedRectangle (getLocalBounds().toFloat(), 6.0f);
 
-        g.setFont (juce::FontOptions (11.0f));
+        g.setFont (ClipLookAndFeel::font (11.0f));
         for (auto db = maxDb - 6.0f; db > minDb; db -= 12.0f)
         {
-            g.setColour (text.withAlpha (0.08f));
+            g.setColour (Palette::text.withAlpha (0.08f));
             g.drawHorizontalLine (juce::roundToInt (toY (db)), plot.getX(), plot.getRight());
             g.drawVerticalLine (juce::roundToInt (toX (db)), plot.getY(), plot.getBottom());
 
-            g.setColour (text.withAlpha (0.4f));
+            g.setColour (Palette::text.withAlpha (0.4f));
             g.drawText (juce::String (juce::roundToInt (db)), juce::Rectangle (plot.getX() + 4.0f, toY (db) - 14.0f, 30.0f, 12.0f), juce::Justification::left);
         }
 
-        g.setColour (accent.withAlpha (0.12f));
+        g.setColour (Palette::accent.withAlpha (0.12f));
         g.fillRect (knee);
 
-        g.setColour (text.withAlpha (0.5f));
+        g.setColour (Palette::text.withAlpha (0.5f));
         const float dashes[] = { 4.0f, 4.0f };
         g.drawDashedLine ({ plot.getX(), toY (shownThreshold), plot.getRight(), toY (shownThreshold) }, dashes, 2);
 
-        g.setColour (accent);
+        g.setColour (Palette::accent);
         g.strokePath (curve, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
 

@@ -44,6 +44,8 @@ set(SourceFiles
         Source/dsp/Oversampler.h
         Source/dsp/PeakFifo.h
         Source/dsp/TransferCurves.h
+        Source/ui/ClipLookAndFeel.cpp
+        Source/ui/ClipLookAndFeel.h
         Source/ui/Knob.h
         Source/ui/MainPanel.h
         Source/ui/TransferCurveDisplay.h
@@ -67,6 +69,12 @@ juce_add_plugin(CLIP
     VST3_CATEGORIES Fx Distortion
 )
 
+# Embedded fonts (SIL Open Font License, see Resources/Fonts/OFL.txt)
+juce_add_binary_data(CLIPBinaryData SOURCES
+        Resources/Fonts/Barlow-Regular.ttf
+        Resources/Fonts/Barlow-SemiBold.ttf
+)
+
 # Generates JuceHeader.h for the modules linked below
 juce_generate_juce_header(CLIP)
 
@@ -82,6 +90,7 @@ target_compile_definitions(CLIP
 
 target_link_libraries(CLIP
     PRIVATE
+        CLIPBinaryData
         juce::juce_audio_utils
         juce::juce_dsp
     PUBLIC
@@ -104,13 +113,16 @@ target_sources(CLIPTests PRIVATE
         Tests/EditorTests.cpp
         Tests/TransferCurveDisplayTests.cpp
         Tests/WaveformDisplayTests.cpp
+        Tests/LookAndFeelTests.cpp
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
+        Source/ui/ClipLookAndFeel.cpp
 )
 target_include_directories(CLIPTests PRIVATE Source)
 target_compile_definitions(CLIPTests PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0
         JUCE_ENABLE_ALLOCATION_HOOKS=1 JucePlugin_Name="CLIP")
 target_link_libraries(CLIPTests PRIVATE
+        CLIPBinaryData
         juce::juce_audio_processors
         juce::juce_dsp
         juce::juce_recommended_config_flags
