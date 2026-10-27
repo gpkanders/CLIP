@@ -62,7 +62,7 @@ public:
             ClipAudioProcessor processor;
             const auto editor = createEditor(processor);
             const auto sliders = findAll<juce::Slider>(*editor);
-            expectEquals((int) sliders.size(), 5);
+            expectEquals((int) sliders.size(), 6);
 
             for (auto* slider : sliders)
             {

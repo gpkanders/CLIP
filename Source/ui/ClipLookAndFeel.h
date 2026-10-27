@@ -12,6 +12,7 @@ namespace Palette
     inline const juce::Colour textDim { 0xff8b919d };
     inline const juce::Colour accent { 0xff4cc9e0 }; // output signal, values, the curve
     inline const juce::Colour clip { 0xffff5a36 }; // the part of the input that gets clipped
+    inline const juce::Colour detail { 0xffffc94a }; // what Detail keeps on the clipped peaks
 }
 
 class ClipLookAndFeel : public juce::LookAndFeel_V4

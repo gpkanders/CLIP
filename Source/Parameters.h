@@ -12,6 +12,7 @@ namespace Parameters
     inline const juce::ParameterID bypass { "bypass", 1 };
     inline const juce::ParameterID oversampling { "oversampling", 2 };
     inline const juce::ParameterID shape { "shape", 3 };
+    inline const juce::ParameterID detail { "detail", 4 };
 
     inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     {
@@ -35,6 +36,9 @@ namespace Parameters
 
         // In TransferCurves::Shape order. Defaults to soft, the curve sessions saved before this parameter used.
         layout.add (std::make_unique<juce::AudioParameterChoice> (shape, "Shape", juce::StringArray { "Hard", "Soft", "Linear", "Tanh", "Sine", "Cubic" }, 1));
+
+        // How much of the detail riding on clipped peaks survives the clip. Defaults off, so older sessions sound the same.
+        layout.add (std::make_unique<AudioParameterFloat> (detail, "Detail", juce::NormalisableRange (0.0f, 100.0f, 0.1f), 0.0f, percent));
         return layout;
     }
 }

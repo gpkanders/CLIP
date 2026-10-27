@@ -23,7 +23,7 @@ public:
             expect(! display.refresh(), id.getParamID());
         }
 
-        for (const auto& id : { Parameters::inputGain, Parameters::outputGain, Parameters::mix })
+        for (const auto& id : { Parameters::inputGain, Parameters::outputGain, Parameters::mix, Parameters::detail })
         {
             setParameter(processor, id, 6.0f);
             expect(! display.refresh(), id.getParamID());

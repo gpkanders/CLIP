@@ -16,6 +16,7 @@ public:
         : inputKnob (apvts, Parameters::inputGain),
           thresholdKnob (apvts, Parameters::threshold),
           softnessKnob (apvts, Parameters::softness),
+          detailKnob (apvts, Parameters::detail),
           outputKnob (apvts, Parameters::outputGain),
           mixKnob (apvts, Parameters::mix),
           shapeBox (apvts, Parameters::shape),
@@ -24,8 +25,10 @@ public:
           curveDisplay (apvts),
           waveformDisplay (apvts)
     {
-        for (auto* knob : { &inputKnob, &thresholdKnob, &softnessKnob, &outputKnob, &mixKnob })
+        for (auto* knob : { &inputKnob, &thresholdKnob, &softnessKnob, &detailKnob, &outputKnob, &mixKnob })
             addAndMakeVisible (knob);
+
+        detailKnob.setArcColour (Palette::detail);
 
         addAndMakeVisible (shapeBox);
         addAndMakeVisible (oversamplingBox);
@@ -60,13 +63,13 @@ public:
         options.removeFromTop (12);
         bypassButton.setBounds (options.removeFromTop (28));
 
-        const auto knobWidth = controls.getWidth() / 5;
-        for (auto* knob : { &inputKnob, &thresholdKnob, &softnessKnob, &outputKnob, &mixKnob })
+        const auto knobWidth = controls.getWidth() / 6;
+        for (auto* knob : { &inputKnob, &thresholdKnob, &softnessKnob, &detailKnob, &outputKnob, &mixKnob })
             knob->setBounds (controls.removeFromLeft (knobWidth).reduced (6, 0));
     }
 
 private:
-    Knob inputKnob, thresholdKnob, softnessKnob, outputKnob, mixKnob;
+    Knob inputKnob, thresholdKnob, softnessKnob, detailKnob, outputKnob, mixKnob;
     ChoiceBox shapeBox, oversamplingBox;
     juce::ToggleButton bypassButton { "Bypass" };
     juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttachment;

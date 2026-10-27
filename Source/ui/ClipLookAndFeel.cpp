@@ -18,6 +18,7 @@ ClipLookAndFeel::ClipLookAndFeel()
     setColour (juce::TextEditor::highlightColourId, Palette::accent.withAlpha (0.4f));
     setColour (juce::CaretComponent::caretColourId, Palette::accent);
 
+    setColour (juce::Slider::rotarySliderFillColourId, Palette::accent);
     setColour (juce::Slider::textBoxTextColourId, Palette::text);
     setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     setColour (juce::Slider::textBoxBackgroundColourId, juce::Colours::transparentBlack);
@@ -84,7 +85,7 @@ void ClipLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
     };
 
     strokeArc (rotaryStartAngle, rotaryEndAngle, Palette::track);
-    strokeArc (std::min (originAngle, valueAngle), std::max (originAngle, valueAngle), Palette::accent);
+    strokeArc (std::min (originAngle, valueAngle), std::max (originAngle, valueAngle), slider.findColour (juce::Slider::rotarySliderFillColourId));
 
     g.setColour (Palette::knob);
     g.fillEllipse (juce::Rectangle (bodyRadius * 2.0f, bodyRadius * 2.0f).withCentre (centre));
