@@ -1,19 +1,22 @@
 #pragma once
 #include "PluginProcessor.h"
+#include "ui/MainPanel.h"
 
 class ClipAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
+    static constexpr int defaultWidth = MainPanel::width;
+    static constexpr int defaultHeight = MainPanel::height;
+
     explicit ClipAudioProcessorEditor (ClipAudioProcessor&);
 
-    void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
     void drainPeaks();
 
     ClipAudioProcessor& clipProcessor;
-    juce::GenericAudioProcessorEditor genericEditor;
+    MainPanel panel;
 
     std::array<PeakFifo::Frame, PeakFifo::capacity> newPeaks;
     int numNewPeaks = 0;

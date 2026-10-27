@@ -40,6 +40,9 @@ public:
     // Read by the editor on the message thread
     PeakFifo peakFifo;
 
+    // Saved with the plugin state, 0 until an editor has been opened. The height follows from the aspect ratio.
+    std::atomic<int> editorWidth { 0 };
+
 private:
     void process (juce::AudioBuffer<float>& buffer, bool bypassed);
     void setChainParameters (bool bypassed);

@@ -2,6 +2,8 @@
 #include "PluginEditor.h"
 #include "Parameters.h"
 
+static const juce::Identifier editorWidthId { "editorWidth" };
+
 ClipAudioProcessor::ClipAudioProcessor()
     : AudioProcessor (BusesProperties()
                           .withInput ("Input", juce::AudioChannelSet::stereo(), true)
@@ -95,14 +97,21 @@ juce::AudioProcessorEditor* ClipAudioProcessor::createEditor()
 
 void ClipAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    if (auto xml = apvts.copyState().createXml())
+    auto state = apvts.copyState();
+    state.setProperty (editorWidthId, editorWidth.load(), nullptr);
+
+    if (auto xml = state.createXml())
         copyXmlToBinary (*xml, destData);
 }
 
 void ClipAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary (data, sizeInBytes); xml != nullptr && xml->hasTagName (apvts.state.getType()))
-        apvts.replaceState (juce::ValueTree::fromXml (*xml));
+    {
+        const auto state = juce::ValueTree::fromXml (*xml);
+        editorWidth = (int) state.getProperty (editorWidthId, 0);
+        apvts.replaceState (state);
+    }
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

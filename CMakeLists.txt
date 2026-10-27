@@ -44,6 +44,8 @@ set(SourceFiles
         Source/dsp/Oversampler.h
         Source/dsp/PeakFifo.h
         Source/dsp/TransferCurves.h
+        Source/ui/Knob.h
+        Source/ui/MainPanel.h
 )
 
 juce_add_plugin(CLIP
@@ -97,6 +99,7 @@ target_sources(CLIPTests PRIVATE
         Tests/ClipChainTests.cpp
         Tests/ProcessorTests.cpp
         Tests/PeakFifoTests.cpp
+        Tests/EditorTests.cpp
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
 )
