@@ -43,6 +43,7 @@ public:
     }
 
     int getLatencySamples() const noexcept { return oversampler.getLatencySamples(); }
+    int getMaxLatencySamples() const noexcept { return oversampler.getMaxLatencySamples(); }
 
 private:
     void applyOversampling (int factorIndex) noexcept
