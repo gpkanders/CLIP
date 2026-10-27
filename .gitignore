@@ -1,0 +1,21 @@
+# Build output (CMake, Xcode, JUCE artefacts, CPM-fetched JUCE)
+build/
+build-*/
+cmake-build-*/
+*_artefacts/
+DerivedData/
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+
+# IDEs
+.idea/
+.vscode/
+.cache/
+
+# macOS
+.DS_Store
+
+# Local Claude Code settings
+.claude/settings.local.json
