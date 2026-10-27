@@ -126,6 +126,7 @@ public:
                 ClipAudioProcessor processor;
                 setParameter(processor, Parameters::inputGain, 12.0f);
                 setParameter(processor, Parameters::threshold, thresholdDb);
+                setParameter(processor, Parameters::softness, 0.0f);
                 setParameter(processor, Parameters::oversampling, (float) factor);
 
                 const auto output = render(processor, input, sampleRate, blockSize);

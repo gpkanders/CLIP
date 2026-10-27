@@ -28,7 +28,8 @@ namespace Parameters
         juce::AudioProcessorValueTreeState::ParameterLayout layout;
         layout.add (std::make_unique<AudioParameterFloat> (inputGain, "Input", juce::NormalisableRange (-24.0f, 24.0f, 0.01f), 0.0f, db));
         layout.add (std::make_unique<AudioParameterFloat> (threshold, "Threshold", juce::NormalisableRange (-36.0f, 0.0f, 0.01f), 0.0f, db));
-        layout.add (std::make_unique<AudioParameterFloat> (softness, "Softness", juce::NormalisableRange (0.0f, 100.0f, 0.1f), 0.0f, percent));
+        // Shown as Knee, the width of the bend below the threshold. The ID stays softness so saved sessions still load.
+        layout.add (std::make_unique<AudioParameterFloat> (softness, "Knee", juce::NormalisableRange (0.0f, 100.0f, 0.1f), 50.0f, percent));
         layout.add (std::make_unique<AudioParameterFloat> (outputGain, "Output", juce::NormalisableRange (-24.0f, 24.0f, 0.01f), 0.0f, db));
         layout.add (std::make_unique<AudioParameterFloat> (mix, "Mix", juce::NormalisableRange (0.0f, 100.0f, 0.1f), 100.0f, percent));
         layout.add (std::make_unique<juce::AudioParameterBool> (bypass, "Bypass", false));

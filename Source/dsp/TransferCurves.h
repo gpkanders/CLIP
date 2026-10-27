@@ -65,14 +65,14 @@ namespace TransferCurves
     // Linear below the knee and flat at the ceiling above it. In between, each shape eases into the ceiling
     // along its own curve scaled to the headroom: y = start + headroom * rise ((|x| - start) / headroom).
     // Every rise has a slope between 0 and 1, so no shape boosts or exceeds the ceiling.
-    // Softness is the headroom as a percentage of half the ceiling, the same for every shape except hard,
-    // which ignores it. With soft, that's a quadratic knee centred on the threshold; 0 is a hard clip.
+    // Softness is the headroom as a percentage of the ceiling, the same for every shape except hard, which
+    // ignores it. 0 is a hard clip, and 100 bends the curve all the way from silence.
     struct Knee
     {
         Knee (float thresholdDb, float softness, Shape newShape)
             : shape (newShape),
               ceiling (juce::Decibels::decibelsToGain (thresholdDb)),
-              headroom (shape == Shape::hard ? 0.0f : ceiling * juce::jlimit (0.0f, 100.0f, softness) / 200.0f)
+              headroom (shape == Shape::hard ? 0.0f : ceiling * juce::jlimit (0.0f, 100.0f, softness) / 100.0f)
         {
         }
 
