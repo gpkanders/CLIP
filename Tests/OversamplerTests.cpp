@@ -26,6 +26,46 @@ public:
             expectEquals(oversampler.getLatencySamples(), 0);
         }
 
+        beginTest("output matches the input delayed by the reported latency");
+        for (auto i = 0; i < Oversampler::numFactors; ++i)
+        {
+            for (auto processingDelay : { 0.0f, 1.0f })
+            {
+                if (i == 0 && processingDelay > 0.0f)
+                    continue;
+
+                Oversampler oversampler;
+                oversampler.prepare(1, blockSize);
+                oversampler.setFactorIndex(i, processingDelay);
+
+                // 6.1 kHz exposes phase errors in the padding that low frequencies hide
+                juce::AudioBuffer<float> input(1, blockSize * 32);
+                for (auto n = 0; n < input.getNumSamples(); ++n)
+                    input.setSample(0, n, 0.5f * (float) std::sin(juce::MathConstants<double>::twoPi * 6100.0 * n / sampleRate));
+
+                juce::AudioBuffer<float> output(input);
+                auto previous = 0.0f;
+                for (auto start = 0; start < output.getNumSamples(); start += blockSize)
+                    oversampler.process(juce::dsp::AudioBlock<float>(output).getSubBlock((size_t) start, blockSize), [&](juce::dsp::AudioBlock<float> block) {
+                        if (processingDelay == 0.0f)
+                            return;
+
+                        auto* samples = block.getChannelPointer(0);
+                        for (size_t n = 0; n < block.getNumSamples(); ++n)
+                            std::swap(samples[n], previous);
+                    });
+
+                auto error = 0.0, signal = 0.0;
+                for (auto n = output.getNumSamples() / 2; n < output.getNumSamples(); ++n)
+                {
+                    const auto reference = (double) input.getSample(0, n - oversampler.getLatencySamples());
+                    error += juce::square(output.getSample(0, n) - reference);
+                    signal += juce::square(reference);
+                }
+                expect(10.0 * std::log10(error / signal + 1.0e-30) < -40.0, juce::String(1 << i) + "x");
+            }
+        }
+
         beginTest("aliasing drops as the factor rises");
         {
             auto previous = 0.0f;
