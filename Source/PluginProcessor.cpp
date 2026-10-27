@@ -22,6 +22,7 @@ void ClipAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     oversampler.prepare (getTotalNumOutputChannels(), samplesPerBlock);
     oversampler.setFactorIndex ((int) oversampling->load());
+    clipper.setAntialiasing (oversampler.getFactor() > 1);
 
     clipper.setParameters (inputGain->load(), threshold->load(), softness->load(), outputGain->load());
     clipper.prepare (sampleRate * oversampler.getFactor());
@@ -53,6 +54,7 @@ void ClipAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     if (const auto factorIndex = (int) oversampling->load(); factorIndex != oversampler.getFactorIndex())
     {
         oversampler.setFactorIndex (factorIndex);
+        clipper.setAntialiasing (oversampler.getFactor() > 1);
         clipper.prepare (getSampleRate() * oversampler.getFactor());
         pendingLatency = oversampler.getLatencySamples();
     }

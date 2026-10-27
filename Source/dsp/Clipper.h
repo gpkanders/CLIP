@@ -14,7 +14,12 @@ public:
         thresholdDb.reset (sampleRate, smoothingSeconds);
         softness.reset (sampleRate, smoothingSeconds);
         outputGain.reset (sampleRate, smoothingSeconds);
+        previousInput.fill (0.0f);
     }
+
+    // ADAA averages neighbouring samples below the knee, which rolls off the top octave
+    // unless the clipper runs oversampled
+    void setAntialiasing (bool shouldAntialias) { antialiasing = shouldAntialias; }
 
     void setParameters (float inputGainDb, float newThresholdDb, float newSoftness, float outputGainDb)
     {
@@ -26,17 +31,20 @@ public:
 
     void process (juce::dsp::AudioBlock<float> block)
     {
+        jassert (block.getNumChannels() <= previousInput.size());
+
         for (size_t i = 0; i < block.getNumSamples(); ++i)
         {
             const auto in = inputGain.getNextValue();
-            const auto threshold = thresholdDb.getNextValue();
-            const auto soft = softness.getNextValue();
+            const TransferCurves::Knee knee (thresholdDb.getNextValue(), softness.getNextValue());
             const auto out = outputGain.getNextValue();
 
             for (size_t ch = 0; ch < block.getNumChannels(); ++ch)
             {
                 auto* samples = block.getChannelPointer (ch);
-                samples[i] = TransferCurves::clip (samples[i] * in, threshold, soft) * out;
+                const auto x = samples[i] * in;
+                samples[i] = (antialiasing ? TransferCurves::clipAntialiased (x, previousInput[ch], knee) : TransferCurves::clip (x, knee)) * out;
+                previousInput[ch] = x;
             }
         }
     }
@@ -46,4 +54,6 @@ private:
     juce::SmoothedValue<float> thresholdDb;
     juce::SmoothedValue<float> softness;
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> outputGain;
+    std::array<float, 2> previousInput {};
+    bool antialiasing = false;
 };

@@ -44,6 +44,29 @@ public:
                 expectEquals(TransferCurves::clip(x, thresholdDb, 0.0f), juce::jlimit(-ceiling, ceiling, x));
         }
 
+        beginTest("antiderivative integrates the curve");
+        forEachSetting([this](float thresholdDb, float softness) {
+            const TransferCurves::Knee knee(thresholdDb, softness);
+            const auto h = 1.0e-4;
+            for (auto x = -2.0; x <= 2.0; x += 0.0101)
+            {
+                const auto slope = (TransferCurves::antiderivative(x + h, knee) - TransferCurves::antiderivative(x - h, knee)) / (2.0 * h);
+                expectWithinAbsoluteError(slope, (double) TransferCurves::clip((float) x, knee), 1.0e-4);
+            }
+        });
+
+        beginTest("antialiased clip stays bounded and handles equal samples");
+        forEachSetting([this](float thresholdDb, float softness) {
+            const TransferCurves::Knee knee(thresholdDb, softness);
+            for (auto x = -4.0f; x <= 4.0f; x += 0.01f)
+            {
+                expectEquals(TransferCurves::clipAntialiased(x, x, knee), TransferCurves::clip(x, knee));
+                const auto y = TransferCurves::clipAntialiased(x, x - 1.0e-6f, knee);
+                expect(std::isfinite(y) && std::abs(y) <= knee.ceiling);
+                expect(std::abs(TransferCurves::clipAntialiased(x, -x * 0.5f, knee)) <= knee.ceiling * 1.0001f);
+            }
+        });
+
         beginTest("applies input gain, curve, then output gain");
         {
             juce::AudioBuffer<float> buffer(2, 4);
