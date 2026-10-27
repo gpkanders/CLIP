@@ -84,6 +84,36 @@ public:
                 }
         }
 
+        beginTest("detail keeps peaks at the threshold plus output gain");
+        {
+            const auto limit = juce::Decibels::decibelsToGain(thresholdDb + outputGainDb);
+            auto input = sine(44100.0, 60.0, 0.6f, 44100 / 2);
+            const auto ripple = sine(44100.0, 5000.0, 0.3f, input.getNumSamples());
+            for (auto ch = 0; ch < input.getNumChannels(); ++ch)
+                input.addFrom(ch, 0, ripple, ch, 0, input.getNumSamples());
+
+            const auto peakDb = [&](float detail, int factor) {
+                ClipAudioProcessor processor;
+                setParameter(processor, Parameters::inputGain, 12.0f);
+                setParameter(processor, Parameters::threshold, thresholdDb);
+                setParameter(processor, Parameters::outputGain, outputGainDb);
+                setParameter(processor, Parameters::detail, detail);
+                setParameter(processor, Parameters::oversampling, (float) factor);
+
+                const auto output = render(processor, input, 44100.0, 512);
+                const auto settled = juce::dsp::AudioBlock<const float>(output).getSubBlock((size_t) output.getNumSamples() / 2);
+                return juce::Decibels::gainToDecibels(peak(settled) / limit);
+            };
+
+            // The oversampling filters ring on the ripple whether or not detail is on, so compare against it off
+            for (auto factor = 0; factor < numFactors; ++factor)
+            {
+                const auto withDetail = peakDb(100.0f, factor), without = peakDb(0.0f, factor);
+                const auto setting = juce::String(1 << factor) + "x: " + juce::String(withDetail, 2) + " dB, " + juce::String(without, 2) + " dB without";
+                expect(withDetail <= (factor == 0 ? 1.0e-4f : without + 0.05f), setting);
+            }
+        }
+
         beginTest("aliasing drops as the oversampling factor rises");
         forEachConfig([this](double sampleRate, int blockSize) {
             // Bin centered, so every harmonic and alias lands on a bin and leakage stays within a few bins

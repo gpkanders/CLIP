@@ -36,6 +36,7 @@ public:
     }
 
     void setShape (TransferCurves::Shape shape) { clipper.setShape (shape); }
+    void setDetail (float percent) { clipper.setDetail (percent); }
 
     void process (juce::dsp::AudioBlock<float> block)
     {

@@ -56,6 +56,7 @@ private:
     std::atomic<float>* mix = nullptr;
     std::atomic<float>* oversampling = nullptr;
     std::atomic<float>* shape = nullptr;
+    std::atomic<float>* detail = nullptr;
 
     ClipChain chain;
 

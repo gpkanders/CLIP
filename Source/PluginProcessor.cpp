@@ -18,6 +18,7 @@ ClipAudioProcessor::ClipAudioProcessor()
     mix = apvts.getRawParameterValue (Parameters::mix.getParamID());
     oversampling = apvts.getRawParameterValue (Parameters::oversampling.getParamID());
     shape = apvts.getRawParameterValue (Parameters::shape.getParamID());
+    detail = apvts.getRawParameterValue (Parameters::detail.getParamID());
 
     startTimerHz (10);
 }
@@ -85,6 +86,7 @@ void ClipAudioProcessor::setChainParameters (bool bypassed)
 {
     chain.setParameters (inputGain->load(), threshold->load(), softness->load(), outputGain->load(), mix->load(), bypassed);
     chain.setShape ((TransferCurves::Shape) (int) shape->load());
+    chain.setDetail (detail->load());
 }
 
 void ClipAudioProcessor::timerCallback()

@@ -7,6 +7,10 @@ class Clipper
 public:
     static constexpr double smoothingSeconds = 0.02;
 
+    // Detail takes what the curve would remove from the band below this off before clipping, so the band above
+    // rides on the clipped peaks instead of being flattened with them. The clip still holds the ceiling.
+    static constexpr double detailCrossoverHz = 1000.0;
+
     // Snaps to the current targets, so call setParameters first to start without a ramp
     void prepare (double sampleRate)
     {
@@ -15,7 +19,10 @@ public:
         softness.reset (sampleRate, smoothingSeconds);
         outputGain.reset (sampleRate, smoothingSeconds);
         shapeFade.reset (sampleRate, smoothingSeconds);
+        detail.reset (sampleRate, smoothingSeconds);
+        detailCoefficient = (float) (1.0 - std::exp (-juce::MathConstants<double>::twoPi * detailCrossoverHz / sampleRate));
         previousInput.fill (0.0f);
+        lowBand.fill (0.0f);
     }
 
     // ADAA averages neighbouring samples below the knee, which rolls off the top octave
@@ -42,6 +49,8 @@ public:
         shapeFade.setTargetValue (1.0f);
     }
 
+    void setDetail (float percent) { detail.setTargetValue (percent / 100.0f); }
+
     void process (juce::dsp::AudioBlock<float> block)
     {
         jassert (block.getNumChannels() <= previousInput.size());
@@ -53,11 +62,14 @@ public:
             const TransferCurves::Knee knee (threshold, soft, shape), fadingFrom (threshold, soft, previousShape);
             const auto fade = shapeFade.getNextValue();
             const auto out = outputGain.getNextValue();
+            const auto detailAmount = detail.getNextValue();
 
             for (size_t ch = 0; ch < block.getNumChannels(); ++ch)
             {
                 auto* samples = block.getChannelPointer (ch);
-                const auto x = samples[i] * in;
+                // The low band's overshoot comes off before the clip. Below the knee it has none, so nothing changes.
+                lowBand[ch] += detailCoefficient * (samples[i] * in - lowBand[ch]);
+                const auto x = samples[i] * in - detailAmount * (lowBand[ch] - TransferCurves::clip (lowBand[ch], knee));
                 auto y = curve (x, previousInput[ch], knee);
 
                 if (fade < 1.0f)
@@ -80,7 +92,10 @@ private:
     juce::SmoothedValue<float> softness;
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> outputGain;
     juce::SmoothedValue<float> shapeFade { 1.0f };
+    juce::SmoothedValue<float> detail;
     TransferCurves::Shape shape = TransferCurves::Shape::soft, previousShape = TransferCurves::Shape::soft;
     std::array<float, 2> previousInput {};
+    std::array<float, 2> lowBand {};
+    float detailCoefficient = 0.0f;
     bool antialiasing = false;
 };

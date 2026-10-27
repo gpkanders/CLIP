@@ -136,6 +136,74 @@ public:
             expectWithinAbsoluteError(buffer.getSample(1, 1), 1.0f / gain / gain, 1.0e-6f);
         }
 
+        beginTest("detail leaves signals below the knee untouched");
+        for (auto antialias : { false, true })
+        {
+            juce::AudioBuffer<float> buffer(1, 4800);
+            for (auto i = 0; i < buffer.getNumSamples(); ++i)
+                buffer.setSample(0, i, 0.2f * std::sin(0.03f * (float) i));
+            juce::AudioBuffer<float> reference(buffer);
+
+            Clipper plain, detailed;
+            for (auto* clipper : { &plain, &detailed })
+            {
+                clipper->setParameters(0.0f, -6.0f, 50.0f, 0.0f);
+                clipper->setDetail(clipper == &detailed ? 100.0f : 0.0f);
+                clipper->setAntialiasing(antialias);
+                clipper->prepare(48000.0);
+            }
+
+            plain.process(reference);
+            detailed.process(buffer);
+            for (auto i = 0; i < buffer.getNumSamples(); ++i)
+                expectWithinAbsoluteError(buffer.getSample(0, i), reference.getSample(0, i), 1.0e-6f);
+        }
+
+        beginTest("detail keeps ripple on clipped peaks without passing the ceiling");
+        {
+            constexpr auto sampleRate = 48000.0;
+            const auto ceiling = juce::Decibels::decibelsToGain(-12.0f);
+            const auto ripple = [] (int i) { return 0.05f * std::sin(0.9f * (float) i); };
+
+            juce::AudioBuffer<float> flattened(1, 48000), detailed(1, 48000);
+            for (auto i = 0; i < flattened.getNumSamples(); ++i)
+            {
+                const auto x = 0.5f * std::sin(0.002f * (float) i) + ripple(i);
+                flattened.setSample(0, i, x);
+                detailed.setSample(0, i, x);
+            }
+
+            Clipper hard, recovering;
+            for (auto* clipper : { &hard, &recovering })
+            {
+                clipper->setParameters(0.0f, -12.0f, 0.0f, 0.0f);
+                clipper->setShape(Shape::hard);
+                clipper->setDetail(clipper == &recovering ? 100.0f : 0.0f);
+                clipper->prepare(sampleRate);
+            }
+
+            hard.process(flattened);
+            recovering.process(detailed);
+
+            // On the positive tops, where the slow sine alone is well past the ceiling
+            auto correlation = 0.0, rippleEnergy = 0.0, flatEnergy = 0.0;
+            for (auto i = 0; i < detailed.getNumSamples(); ++i)
+            {
+                const auto y = detailed.getSample(0, i);
+                expect(std::abs(y) <= ceiling * 1.0001f);
+
+                if (std::sin(0.002f * (float) i) < 0.7f)
+                    continue;
+
+                correlation += (y - ceiling) * ripple(i);
+                rippleEnergy += juce::square(ripple(i));
+                flatEnergy += juce::square(flattened.getSample(0, i) - ceiling);
+            }
+
+            expect(flatEnergy < 1.0e-9, "hard clip should flatten the tops");
+            expect(correlation / rippleEnergy > 0.1, "ripple should come back on the tops: " + juce::String(correlation / rippleEnergy));
+        }
+
         beginTest("input gain step ramps over the smoothing time");
         {
             constexpr auto sampleRate = 48000.0;
@@ -167,6 +235,7 @@ public:
 
             Clipper clipper;
             clipper.setParameters(3.0f, -12.0f, 50.0f, -3.0f);
+            clipper.setDetail(50.0f);
 
             const juce::UnitTestAllocationChecker checker(*this);
             clipper.process(buffer);

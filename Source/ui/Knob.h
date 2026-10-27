@@ -23,6 +23,8 @@ public:
         addAndMakeVisible (slider);
     }
 
+    void setArcColour (juce::Colour colour) { slider.setColour (juce::Slider::rotarySliderFillColourId, colour); }
+
     void resized() override
     {
         auto bounds = getLocalBounds();
