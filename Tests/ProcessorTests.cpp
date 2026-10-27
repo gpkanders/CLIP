@@ -144,27 +144,6 @@ public:
             }
         });
 
-        beginTest("input and output peaks line up at every factor");
-        for (auto factor = 0; factor < numFactors; ++factor)
-        {
-            ClipAudioProcessor processor;
-            setParameter(processor, Parameters::oversampling, (float) factor);
-            render(processor, multitone(44100.0, 44100 / 4), 44100.0, 512);
-
-            // Tones with no common period, so no latency can line up with a shifted copy of the input
-            std::vector<PeakFifo::Frame> frames(PeakFifo::capacity);
-            const auto numFrames = processor.peakFifo.pop(frames.data(), (int) frames.size());
-            expect(numFrames >= 240, juce::String(numFrames) + " frames");
-
-            auto maxError = 0.0f;
-            for (auto i = numFrames / 2; i < numFrames; ++i)
-                maxError = std::max({ maxError,
-                                      std::abs(frames[(size_t) i].output.min - frames[(size_t) i].input.min),
-                                      std::abs(frames[(size_t) i].output.max - frames[(size_t) i].input.max) });
-
-            expect(maxError < 0.01f, juce::String(1 << factor) + "x: " + juce::String(maxError));
-        }
-
         beginTest("opening and closing the editor while audio runs is safe");
         {
             ClipAudioProcessor processor;
@@ -184,12 +163,12 @@ public:
                 }
             });
 
-            std::array<PeakFifo::Frame, 64> frames;
+            std::array<ClipTap::Frame, 64> frames;
             for (auto i = 0; i < 20; ++i)
             {
                 std::unique_ptr<juce::AudioProcessorEditor> editor(processor.createEditor());
                 for (auto n = 0; n < 50; ++n)
-                    processor.peakFifo.pop(frames.data(), (int) frames.size());
+                    processor.tap.pop(frames.data(), (int) frames.size());
             }
 
             running = false;

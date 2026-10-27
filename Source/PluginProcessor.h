@@ -1,7 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "dsp/ClipChain.h"
-#include "dsp/PeakFifo.h"
+#include "dsp/ClipTap.h"
 
 class ClipAudioProcessor : public juce::AudioProcessor,
                            private juce::Timer
@@ -38,7 +38,7 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
     // Read by the editor on the message thread
-    PeakFifo peakFifo;
+    ClipTap tap;
 
     // Saved with the plugin state, 0 until an editor has been opened. The height follows from the aspect ratio.
     std::atomic<int> editorWidth { 0 };
@@ -59,10 +59,6 @@ private:
     std::atomic<float>* detail = nullptr;
 
     ClipChain chain;
-
-    // Delays the input by the chain's latency so its peaks line up with the output's
-    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::None> inputDelay;
-    juce::AudioBuffer<float> delayedInput;
 
     // Written on the audio thread, reported to the host from the message thread
     std::atomic<int> pendingLatency { 0 };

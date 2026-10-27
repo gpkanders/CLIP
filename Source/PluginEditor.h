@@ -16,14 +16,14 @@ public:
     void resized() override;
 
 private:
-    void drainPeaks();
+    void drainSamples();
 
     ClipAudioProcessor& clipProcessor;
     ClipLookAndFeel lookAndFeel;
     MainPanel panel;
 
-    std::array<PeakFifo::Frame, PeakFifo::capacity> newPeaks;
-    juce::VBlankAttachment vblank { this, [this] { drainPeaks(); } };
+    std::array<ClipTap::Frame, ClipTap::capacity> newSamples;
+    juce::VBlankAttachment vblank { this, [this] { drainSamples(); } };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ClipAudioProcessorEditor)
 };
