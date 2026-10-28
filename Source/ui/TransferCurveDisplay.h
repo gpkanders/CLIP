@@ -7,7 +7,6 @@
 // The clipper's input to output curve, drawn with the same function the DSP runs. Linear axes scaled to the
 // ceiling keep the knee large enough to tell the shapes apart at any threshold, so the threshold shows in the labels.
 // Input and output gain only move the signal along the curve, so they aren't part of it.
-// Transparent, so whatever sits behind it shows through.
 class TransferCurveDisplay : public juce::Component
 {
 public:
@@ -58,6 +57,9 @@ public:
 
     void paint (juce::Graphics& g) override
     {
+        g.setColour (Palette::display);
+        g.fillRoundedRectangle (getLocalBounds().toFloat(), 6.0f);
+
         // Gridlines at multiples of half the ceiling, labelled with the level they mark
         g.setFont (ClipLookAndFeel::displayFont (11.0f));
         for (auto multiple = 0.5f; multiple < inputRange; multiple += 0.5f)

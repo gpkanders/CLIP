@@ -2,8 +2,8 @@
 #include "DisplayGlass.h"
 #include "Faceplate.h"
 #include "Knob.h"
+#include "PeakHistory.h"
 #include "RotarySwitch.h"
-#include "Spectrum.h"
 #include "TransferCurveDisplay.h"
 #include "../Parameters.h"
 
@@ -24,6 +24,7 @@ public:
           shapeSwitch (apvts, Parameters::shape),
           oversamplingSwitch (apvts, Parameters::oversampling),
           bypassAttachment (apvts, Parameters::bypass.getParamID(), bypassButton),
+          peakHistory (apvts),
           curveDisplay (apvts)
     {
         addAndMakeVisible (faceplate);
@@ -36,17 +37,17 @@ public:
         addAndMakeVisible (shapeSwitch);
         addAndMakeVisible (oversamplingSwitch);
         addAndMakeVisible (bypassButton);
-        // The curve over the spectrum
-        addAndMakeVisible (spectrum);
+        addAndMakeVisible (peakHistory);
         addAndMakeVisible (curveDisplay);
-        addAndMakeVisible (glass);
+        for (auto& each : glass)
+            addAndMakeVisible (each);
         setSize (width, height);
     }
 
     // Called once per display frame with the samples that arrived since the last one
     void showSamples (const ClipTap::Frame* frames, int numFrames, double sampleRate)
     {
-        spectrum.update (frames, numFrames, sampleRate);
+        peakHistory.update (frames, numFrames, sampleRate);
 
         auto peak = 0.0f;
         for (auto i = 0; i < numFrames; ++i)
@@ -58,10 +59,14 @@ public:
     {
         faceplate.setBounds (getLocalBounds());
 
+        // Peaks over time on the left, the curve in a square on the right, with the bezel showing between them
         const juce::Rectangle bezel (24, 46, 752, 246);
-        spectrum.setBounds (bezel.reduced (4));
-        curveDisplay.setBounds (bezel.reduced (4));
-        glass.setBounds (bezel.reduced (4));
+        auto screens = bezel.reduced (4);
+        curveDisplay.setBounds (screens.removeFromRight (screens.getHeight()));
+        screens.removeFromRight (4);
+        peakHistory.setBounds (screens);
+        glass[0].setBounds (peakHistory.getBounds());
+        glass[1].setBounds (curveDisplay.getBounds());
         bypassButton.setBounds (676, 10, 92, 26);
 
         // Each section's width follows how many controls it holds
@@ -97,7 +102,7 @@ private:
     juce::ToggleButton bypassButton { "Bypass" };
     juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttachment;
 
-    Spectrum spectrum;
+    PeakHistory peakHistory;
     TransferCurveDisplay curveDisplay;
-    DisplayGlass glass;
+    std::array<DisplayGlass, 2> glass;
 };
