@@ -34,6 +34,11 @@ namespace Palette
     inline const juce::Colour tickMajor { 0xffa3a9b3 };
     inline const juce::Colour tickMinor { 0xff5b616b };
     inline const juce::Colour readout { 0xff06080a }; // behind the lit value under each knob
+
+    inline const juce::Colour buttonTop { 0xff2c2f35 };
+    inline const juce::Colour buttonBottom { 0xff1c1e22 };
+    inline const juce::Colour led { 0xffffb23e };
+    inline const juce::Colour ledOff { 0xff3a2b18 };
 }
 
 class ClipLookAndFeel : public juce::LookAndFeel_V4

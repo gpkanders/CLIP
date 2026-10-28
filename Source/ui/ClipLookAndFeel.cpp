@@ -36,9 +36,7 @@ ClipLookAndFeel::ClipLookAndFeel()
     setColour (juce::PopupMenu::highlightedBackgroundColourId, Palette::accent.withAlpha (0.25f));
     setColour (juce::PopupMenu::highlightedTextColourId, Palette::text);
 
-    setColour (juce::ToggleButton::textColourId, Palette::text);
-    setColour (juce::ToggleButton::tickColourId, Palette::accent);
-    setColour (juce::ToggleButton::tickDisabledColourId, Palette::textDim);
+    setColour (juce::ToggleButton::textColourId, Palette::silkscreen);
 }
 
 ClipLookAndFeel::~ClipLookAndFeel() = default;
@@ -93,19 +91,52 @@ void ClipLookAndFeel::drawLabel (juce::Graphics& g, juce::Label& label)
     g.drawText (label.getText(), bounds, juce::Justification::centred, false);
 }
 
-// LookAndFeel_V4's toggle, drawing its text with the embedded font
+// A raised push button with an LED that lights while it's on
 void ClipLookAndFeel::drawToggleButton (juce::Graphics& g, juce::ToggleButton& button, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
 {
-    const auto fontSize = std::min (15.0f, (float) button.getHeight() * 0.75f);
-    const auto tickWidth = fontSize * 1.1f;
+    auto bounds = button.getLocalBounds().toFloat().reduced (1.0f, 2.0f);
+    if (shouldDrawButtonAsDown)
+        bounds.translate (0.0f, 1.0f);
 
-    drawTickBox (g, button, 4.0f, ((float) button.getHeight() - tickWidth) * 0.5f, tickWidth, tickWidth,
-                 button.getToggleState(), button.isEnabled(), shouldDrawButtonAsHighlighted, shouldDrawButtonAsDown);
+    g.setColour (juce::Colours::black.withAlpha (0.6f));
+    g.fillRoundedRectangle (bounds.translated (0.0f, shouldDrawButtonAsDown ? 1.0f : 2.0f), 4.0f);
+    g.setColour (Palette::engraving);
+    g.fillRoundedRectangle (bounds, 4.0f);
+
+    const auto face = bounds.reduced (1.0f);
+    const auto brightness = shouldDrawButtonAsHighlighted && ! shouldDrawButtonAsDown ? 0.04f : 0.0f;
+    g.setGradientFill (juce::ColourGradient::vertical (Palette::buttonTop.brighter (brightness), face.getY(), Palette::buttonBottom, face.getBottom()));
+    g.fillRoundedRectangle (face, 3.0f);
+    g.setColour (juce::Colours::white.withAlpha (0.09f));
+    g.fillRect (face.reduced (3.0f, 0.0f).withHeight (1.0f));
+
+    const auto text = button.getButtonText().toUpperCase();
+    const auto textFont = font (9.5f, true).withExtraKerningFactor (0.16f);
+    const auto ledSize = 7.0f, gap = 8.0f;
+    const auto contentWidth = ledSize + gap + juce::GlyphArrangement::getStringWidth (textFont, text);
+    auto content = face.withSizeKeepingCentre (contentWidth, face.getHeight());
+
+    const auto led = content.removeFromLeft (ledSize).withSizeKeepingCentre (ledSize, ledSize);
+    if (button.getToggleState())
+    {
+        g.setColour (Palette::led.withAlpha (0.25f));
+        g.fillEllipse (led.expanded (3.0f));
+        g.setColour (Palette::led);
+        g.fillEllipse (led);
+        g.setColour (juce::Colours::white.withAlpha (0.5f));
+        g.fillEllipse (led.reduced (2.0f).translated (-0.5f, -0.5f));
+    }
+    else
+    {
+        g.setColour (Palette::ledOff);
+        g.fillEllipse (led);
+        g.setColour (juce::Colours::black.withAlpha (0.5f));
+        g.drawEllipse (led.reduced (0.5f), 1.0f);
+    }
 
     g.setColour (button.findColour (juce::ToggleButton::textColourId));
-    g.setFont (font (fontSize));
-    g.drawFittedText (button.getButtonText(), button.getLocalBounds().withTrimmedLeft (juce::roundToInt (tickWidth) + 10).withTrimmedRight (2),
-                      juce::Justification::centredLeft, 10);
+    g.setFont (textFont);
+    g.drawText (text, content.withTrimmedLeft (gap), juce::Justification::centredLeft, false);
 }
 
 // A machined knob with a knurled edge, inside a printed scale. The light comes from above, so the shading
