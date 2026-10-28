@@ -1,7 +1,11 @@
 name: Build
 
-# Manual only to save macOS Actions minutes: Actions tab > Build > Run workflow
+# Windows runs on pushes to main and PRs. macOS is manual only to save Actions minutes (billed at 10x on private repos):
+# Actions tab > Build > Run workflow
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -10,6 +14,7 @@ concurrency:
 
 jobs:
   macos:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -43,3 +48,33 @@ jobs:
           cp -R build/CLIP_artefacts/Release/AU/CLIP.component ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           auval -v aufx Clip Gplg
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache CPM packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/CPM
+          key: cpm-windows-${{ hashFiles('CMakeLists.txt') }}
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build
+        run: cmake --build build --config Release -j
+
+      - name: Unit tests
+        run: ./build/CLIPTests_artefacts/Release/CLIPTests.exe
+
+      - name: pluginval
+        run: |
+          curl -sSL -o pluginval.zip https://github.com/Tracktion/pluginval/releases/latest/download/pluginval_Windows.zip
+          7z x -y pluginval.zip > /dev/null
+          ./pluginval.exe --strictness-level 10 --validate-in-process --skip-gui-tests \
+            --validate build/CLIP_artefacts/Release/VST3/CLIP.vst3
