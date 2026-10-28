@@ -28,3 +28,11 @@ open build-xcode/CLIP.xcodeproj
 ```
 
 CI runs the unit tests and pluginval (strictness 10) on Windows for every PR and push to main. The macOS job (unit tests, pluginval and auval) is manual only: Actions tab > Build > Run workflow.
+
+## Release
+
+Bump `VERSION` in `CMakeLists.txt`, then push a matching tag. CI attaches the Windows zip (VST3, Standalone and install notes) to a GitHub Release.
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
