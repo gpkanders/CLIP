@@ -76,6 +76,7 @@ juce_add_binary_data(CLIPBinaryData SOURCES
         Resources/Fonts/Archivo-Medium.ttf
         Resources/Fonts/Archivo-Bold.ttf
         Resources/Fonts/Barlow-Regular.ttf
+        Resources/Fonts/ShareTechMono-Regular.ttf
 )
 
 # Generates JuceHeader.h for the modules linked below

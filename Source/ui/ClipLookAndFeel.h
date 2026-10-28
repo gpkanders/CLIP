@@ -24,6 +24,16 @@ namespace Palette
     inline const juce::Colour bezel { 0xff07080a };
     inline const juce::Colour screwLight { 0xff5a5e66 };
     inline const juce::Colour screwDark { 0xff16171a };
+
+    // Machined knobs, lit from above
+    inline const juce::Colour knurlLight { 0xff2d3035 };
+    inline const juce::Colour knurlDark { 0xff17191c };
+    inline const juce::Colour capLight { 0xff3b3f46 };
+    inline const juce::Colour cap { 0xff202327 };
+    inline const juce::Colour pointer { 0xffeef0f3 };
+    inline const juce::Colour tickMajor { 0xffa3a9b3 };
+    inline const juce::Colour tickMinor { 0xff5b616b };
+    inline const juce::Colour readout { 0xff06080a }; // behind the lit value under each knob
 }
 
 class ClipLookAndFeel : public juce::LookAndFeel_V4
@@ -39,10 +49,17 @@ public:
     // For the labels inside the display
     static juce::Font displayFont (float height);
 
+    // For the values under the knobs
+    static juce::Font readoutFont (float height);
+
     juce::Font getLabelFont (juce::Label& label) override
     {
+        if (isReadout (label))
+            return readoutFont (13.0f);
         return font (label.getFont().getHeight(), label.getFont().isBold()).withExtraKerningFactor (label.getFont().getExtraKerningFactor());
     }
+
+    void drawLabel (juce::Graphics&, juce::Label&) override;
     juce::Font getComboBoxFont (juce::ComboBox& box) override { return font (std::min (16.0f, (float) box.getHeight() * 0.6f)); }
     juce::Font getPopupMenuFont() override { return font (15.0f); }
 
@@ -51,6 +68,9 @@ public:
                            float rotaryStartAngle, float rotaryEndAngle, juce::Slider&) override;
 
 private:
+    // A slider's text box
+    static bool isReadout (juce::Label& label) { return dynamic_cast<juce::Slider*> (label.getParentComponent()) != nullptr; }
+
     struct Typefaces;
     juce::SharedResourcePointer<Typefaces> typefaces;
 };

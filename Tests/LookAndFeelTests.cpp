@@ -12,6 +12,7 @@ public:
         expectEquals(ClipLookAndFeel::font(15.0f, true).getTypefaceStyle(), juce::String("Bold"));
         expectEquals(ClipLookAndFeel::font(15.0f).getTypefaceStyle(), juce::String("Medium"));
         expectEquals(ClipLookAndFeel::displayFont(11.0f).getTypefaceName(), juce::String("Barlow"));
+        expectEquals(ClipLookAndFeel::readoutFont(13.0f).getTypefaceName(), juce::String("Share Tech Mono"));
 
         beginTest("the editor and all its labels use the embedded font");
         ClipAudioProcessor processor;
@@ -23,7 +24,8 @@ public:
             if (auto* label = dynamic_cast<juce::Label*>(&component))
             {
                 ++numLabels;
-                expectEquals(label->getLookAndFeel().getLabelFont(*label).getTypefaceName(), juce::String("Archivo"), label->getText());
+                const auto readout = dynamic_cast<juce::Slider*>(label->getParentComponent()) != nullptr;
+                expectEquals(label->getLookAndFeel().getLabelFont(*label).getTypefaceName(), juce::String(readout ? "Share Tech Mono" : "Archivo"), label->getText());
             }
         });
 

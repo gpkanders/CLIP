@@ -30,7 +30,7 @@ public:
         for (auto* knob : { &inputKnob, &thresholdKnob, &softnessKnob, &detailKnob, &outputKnob, &mixKnob })
             addAndMakeVisible (knob);
 
-        detailKnob.setArcColour (Palette::detail);
+        detailKnob.setPointerColour (Palette::detail);
 
         addAndMakeVisible (shapeBox);
         addAndMakeVisible (oversamplingBox);
