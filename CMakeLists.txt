@@ -45,7 +45,7 @@ set(SourceFiles
         Source/dsp/Oversampler.h
         Source/dsp/TransferCurves.h
         Source/ui/ClipLookAndFeel.cpp
-        Source/ui/ChoiceBox.h
+        Source/ui/RotarySwitch.h
         Source/ui/ClipLookAndFeel.h
         Source/ui/Faceplate.h
         Source/ui/Knob.h

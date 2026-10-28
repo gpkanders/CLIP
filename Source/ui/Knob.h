@@ -15,6 +15,7 @@ public:
         slider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
         slider.setTextValueSuffix (" " + parameter.getLabel());
         slider.setDoubleClickReturnValue (true, parameter.convertFrom0to1 (parameter.getDefaultValue()));
+        slider.setTitle (parameter.getName (32));
 
         label.setText (parameter.getName (32).toUpperCase(), juce::dontSendNotification);
         label.setFont (juce::FontOptions (9.5f, juce::Font::bold).withKerningFactor (0.12f));

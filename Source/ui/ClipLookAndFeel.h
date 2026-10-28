@@ -63,6 +63,9 @@ public:
     juce::Font getComboBoxFont (juce::ComboBox& box) override { return font (std::min (16.0f, (float) box.getHeight() * 0.6f)); }
     juce::Font getPopupMenuFont() override { return font (15.0f); }
 
+    // Set on a slider to draw it as a rotary switch
+    static constexpr const char* rotarySwitchProperty = "rotarySwitch";
+
     void drawToggleButton (juce::Graphics&, juce::ToggleButton&, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
     void drawRotarySlider (juce::Graphics&, int x, int y, int width, int height, float sliderPos,
                            float rotaryStartAngle, float rotaryEndAngle, juce::Slider&) override;
