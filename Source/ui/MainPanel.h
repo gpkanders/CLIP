@@ -3,7 +3,7 @@
 #include "Faceplate.h"
 #include "Knob.h"
 #include "RotarySwitch.h"
-#include "Spectrogram.h"
+#include "Spectrum.h"
 #include "TransferCurveDisplay.h"
 #include "../Parameters.h"
 
@@ -36,22 +36,30 @@ public:
         addAndMakeVisible (shapeSwitch);
         addAndMakeVisible (oversamplingSwitch);
         addAndMakeVisible (bypassButton);
-        // The curve over the spectrogram
-        addAndMakeVisible (spectrogram);
+        // The curve over the spectrum
+        addAndMakeVisible (spectrum);
         addAndMakeVisible (curveDisplay);
         addAndMakeVisible (glass);
         setSize (width, height);
     }
 
     // Called once per display frame with the samples that arrived since the last one
-    void showSamples (const ClipTap::Frame* frames, int numFrames, double sampleRate) { spectrogram.update (frames, numFrames, sampleRate); }
+    void showSamples (const ClipTap::Frame* frames, int numFrames, double sampleRate)
+    {
+        spectrum.update (frames, numFrames, sampleRate);
+
+        auto peak = 0.0f;
+        for (auto i = 0; i < numFrames; ++i)
+            peak = std::max (peak, std::abs (frames[i].input));
+        curveDisplay.showPeak (peak);
+    }
 
     void resized() override
     {
         faceplate.setBounds (getLocalBounds());
 
         const juce::Rectangle bezel (24, 46, 752, 246);
-        spectrogram.setBounds (bezel.reduced (4));
+        spectrum.setBounds (bezel.reduced (4));
         curveDisplay.setBounds (bezel.reduced (4));
         glass.setBounds (bezel.reduced (4));
         bypassButton.setBounds (676, 10, 92, 26);
@@ -89,7 +97,7 @@ private:
     juce::ToggleButton bypassButton { "Bypass" };
     juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttachment;
 
-    Spectrogram spectrogram;
+    Spectrum spectrum;
     TransferCurveDisplay curveDisplay;
     DisplayGlass glass;
 };

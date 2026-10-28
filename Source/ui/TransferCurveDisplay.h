@@ -15,6 +15,9 @@ public:
     static constexpr float inputRange = 2.5f;
     static constexpr float outputRange = 1.25f;
 
+    // How much of the peak marker's level is left each display frame
+    static constexpr float peakDecay = 0.92f;
+
     explicit TransferCurveDisplay (juce::AudioProcessorValueTreeState& apvts)
         : threshold (*apvts.getRawParameterValue (Parameters::threshold.getParamID())),
           softness (*apvts.getRawParameterValue (Parameters::softness.getParamID())),
@@ -39,6 +42,19 @@ public:
         rebuild();
         return true;
     }
+
+    // The loudest input at the clipper since the last display frame. Marks it on the curve, falling back slowly.
+    void showPeak (float level)
+    {
+        const auto decayed = std::max (level, peak * peakDecay);
+        if (juce::exactlyEqual (decayed, peak))
+            return;
+
+        peak = decayed < 1.0e-4f ? 0.0f : decayed;
+        repaint();
+    }
+
+    bool isClipping() const { return peak > kneeFor().start(); }
 
     void paint (juce::Graphics& g) override
     {
@@ -82,6 +98,9 @@ public:
 
         g.setColour (Palette::accent);
         g.strokePath (curve, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+        if (peak > 0.0f)
+            paintPeak (g);
     }
 
     void resized() override
@@ -91,18 +110,54 @@ public:
     }
 
 private:
+    // A dot where the peak sits on the curve. While it's past the knee, the stretch of curve from the knee up to it,
+    // where the clip is bending the signal, lights red.
+    void paintPeak (juce::Graphics& g) const
+    {
+        const auto curveKnee = kneeFor();
+        const auto peakX = std::min (toX (peak / curveKnee.ceiling), plot.getRight());
+        const auto clipping = isClipping();
+
+        if (clipping)
+        {
+            juce::Path clipped;
+            clipped.startNewSubPath (pointAt (toX (curveKnee.start() / curveKnee.ceiling), curveKnee));
+            for (auto x = toX (curveKnee.start() / curveKnee.ceiling) + 1.0f; x < peakX; x += 1.0f)
+                clipped.lineTo (pointAt (x, curveKnee));
+            clipped.lineTo (pointAt (peakX, curveKnee));
+
+            for (const auto [width, alpha] : { std::pair (9.0f, 0.12f), std::pair (5.0f, 0.25f), std::pair (2.5f, 1.0f) })
+            {
+                g.setColour (Palette::clip.withAlpha (alpha));
+                g.strokePath (clipped, juce::PathStrokeType (width, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+            }
+        }
+
+        const auto colour = clipping ? Palette::clip : Palette::accent;
+        const auto dot = juce::Rectangle (8.0f, 8.0f).withCentre (pointAt (peakX, curveKnee));
+        g.setColour (colour.withAlpha (0.3f));
+        g.fillEllipse (dot.expanded (4.0f));
+        g.setColour (colour);
+        g.fillEllipse (dot);
+    }
+
+    TransferCurves::Knee kneeFor() const { return { shownThreshold, shownSoftness, (TransferCurves::Shape) (int) shownShape }; }
+
+    // On the curve, at a horizontal position in the plot
+    juce::Point<float> pointAt (float x, TransferCurves::Knee curveKnee) const
+    {
+        const auto input = juce::jmap (x, plot.getX(), plot.getRight(), 0.0f, inputRange) * curveKnee.ceiling;
+        return { x, toY (TransferCurves::clip (input, curveKnee) / curveKnee.ceiling) };
+    }
+
     void rebuild()
     {
-        const TransferCurves::Knee curveKnee (shownThreshold, shownSoftness, (TransferCurves::Shape) (int) shownShape);
+        const auto curveKnee = kneeFor();
 
         // One point per pixel
         std::vector<juce::Point<float>> points;
         for (auto i = 0; i <= (int) plot.getWidth(); ++i)
-        {
-            const auto x = plot.getX() + (float) i;
-            const auto input = juce::jmap (x, plot.getX(), plot.getRight(), 0.0f, inputRange) * curveKnee.ceiling;
-            points.emplace_back (x, toY (TransferCurves::clip (input, curveKnee) / curveKnee.ceiling));
-        }
+            points.push_back (pointAt (plot.getX() + (float) i, curveKnee));
 
         // Points inside a flat run add nothing, and the glow's wide strokes leave specks at the joins between them
         curve.clear();
@@ -127,6 +182,7 @@ private:
     std::atomic<float>& softness;
     std::atomic<float>& shape;
     float shownThreshold, shownSoftness, shownShape;
+    float peak = 0.0f;
 
     juce::Rectangle<float> plot, knee;
     juce::Path curve;

@@ -29,6 +29,23 @@ public:
             expect(! display.refresh(), id.getParamID());
         }
 
+        beginTest("marks the input peak as clipping past the knee, then lets it fall");
+        {
+            ClipAudioProcessor marked;
+            TransferCurveDisplay shown(marked.apvts);
+            shown.setSize(300, 300);
+
+            // At the default 0 dB threshold and 50% knee, the knee starts at half of full scale
+            shown.showPeak(0.3f);
+            expect(! shown.isClipping());
+            shown.showPeak(0.8f);
+            expect(shown.isClipping());
+
+            for (auto frame = 0; frame < 20; ++frame)
+                shown.showPeak(0.0f);
+            expect(! shown.isClipping());
+        }
+
         beginTest("every shape draws a visibly different curve at the default knee");
         {
             std::vector<juce::Image> snapshots;

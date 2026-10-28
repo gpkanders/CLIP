@@ -52,7 +52,7 @@ set(SourceFiles
         Source/ui/Knob.h
         Source/ui/MainPanel.h
         Source/ui/TransferCurveDisplay.h
-        Source/ui/Spectrogram.h
+        Source/ui/Spectrum.h
 )
 
 juce_add_plugin(CLIP
@@ -117,7 +117,7 @@ target_sources(CLIPTests PRIVATE
         Tests/ClipTapTests.cpp
         Tests/EditorTests.cpp
         Tests/TransferCurveDisplayTests.cpp
-        Tests/SpectrogramTests.cpp
+        Tests/SpectrumTests.cpp
         Tests/LookAndFeelTests.cpp
         Tests/SnapshotTests.cpp
         Source/PluginProcessor.cpp
