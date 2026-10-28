@@ -31,6 +31,29 @@ public:
 
         // A name and a readout per knob, and a name for the shape and oversampling switches
         expectEquals(numLabels, 6 * 2 + 2);
+
+        beginTest("the bypass LED lights while bypassed");
+        {
+            ClipLookAndFeel lookAndFeel;
+            juce::ToggleButton button("Bypass");
+            button.setLookAndFeel(&lookAndFeel);
+            button.setSize(92, 26);
+
+            // The LED sits left of the text, in the first quarter
+            const auto ledColour = [&] {
+                const auto image = button.createComponentSnapshot(button.getLocalBounds());
+                auto brightest = juce::Colours::black;
+                for (auto x = 0; x < button.getWidth() / 4; ++x)
+                    if (const auto pixel = image.getPixelAt(x, button.getHeight() / 2); pixel.getBrightness() > brightest.getBrightness())
+                        brightest = pixel;
+                return brightest;
+            };
+
+            expect(ledColour().getBrightness() < Palette::led.getBrightness() * 0.5f);
+            button.setToggleState(true, juce::dontSendNotification);
+            expect(std::abs(ledColour().getHue() - Palette::led.getHue()) < 0.05f);
+            button.setLookAndFeel(nullptr);
+        }
     }
 
 private:
