@@ -1,0 +1,13 @@
+CLIP for Windows (64 bit)
+
+Install the plugin
+1. Before extracting, right click the zip, choose Properties, and tick "Unblock" at the bottom if it's there. Click OK.
+2. Extract the zip.
+3. Copy the CLIP.vst3 folder into C:\Program Files\Common Files\VST3
+4. Open your DAW and rescan plugins. CLIP shows up under the manufacturer GeorgesPlugins.
+
+Standalone app (optional)
+CLIP.exe runs the plugin without a DAW. It isn't code signed, so Windows may show "Windows protected your PC". Click "More info", then "Run anyway".
+
+Uninstall
+Delete C:\Program Files\Common Files\VST3\CLIP.vst3
