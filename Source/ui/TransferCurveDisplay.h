@@ -73,6 +73,13 @@ public:
         g.drawDashedLine ({ plot.getX(), toY (1.0f), plot.getRight(), toY (1.0f) }, dashes, 2);
         g.drawText (juce::String (shownThreshold, 1) + " dB", juce::Rectangle (plot.getX() + 4.0f, toY (1.0f) - 14.0f, 60.0f, 12.0f), juce::Justification::left);
 
+        // A glow under the curve, widest and faintest first
+        for (const auto [width, alpha] : { std::pair (9.0f, 0.06f), std::pair (6.0f, 0.1f), std::pair (4.0f, 0.16f) })
+        {
+            g.setColour (Palette::accent.withAlpha (alpha));
+            g.strokePath (curve, juce::PathStrokeType (width, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        }
+
         g.setColour (Palette::accent);
         g.strokePath (curve, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
@@ -88,19 +95,21 @@ private:
     {
         const TransferCurves::Knee curveKnee (shownThreshold, shownSoftness, (TransferCurves::Shape) (int) shownShape);
 
-        curve.clear();
         // One point per pixel
+        std::vector<juce::Point<float>> points;
         for (auto i = 0; i <= (int) plot.getWidth(); ++i)
         {
             const auto x = plot.getX() + (float) i;
             const auto input = juce::jmap (x, plot.getX(), plot.getRight(), 0.0f, inputRange) * curveKnee.ceiling;
-            const juce::Point point (x, toY (TransferCurves::clip (input, curveKnee) / curveKnee.ceiling));
-
-            if (i == 0)
-                curve.startNewSubPath (point);
-            else
-                curve.lineTo (point);
+            points.emplace_back (x, toY (TransferCurves::clip (input, curveKnee) / curveKnee.ceiling));
         }
+
+        // Points inside a flat run add nothing, and the glow's wide strokes leave specks at the joins between them
+        curve.clear();
+        curve.startNewSubPath (points.front());
+        for (size_t i = 1; i < points.size(); ++i)
+            if (i == points.size() - 1 || ! juce::exactlyEqual (points[i - 1].y, points[i].y) || ! juce::exactlyEqual (points[i + 1].y, points[i].y))
+                curve.lineTo (points[i]);
 
         // Tanh never quite reaches the ceiling, so its knee runs off the right edge
         const auto kneeStart = toX (curveKnee.start() / curveKnee.ceiling);
