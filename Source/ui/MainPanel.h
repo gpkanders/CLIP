@@ -1,7 +1,7 @@
 #pragma once
-#include "ChoiceBox.h"
 #include "Faceplate.h"
 #include "Knob.h"
+#include "RotarySwitch.h"
 #include "Spectrogram.h"
 #include "TransferCurveDisplay.h"
 #include "../Parameters.h"
@@ -20,8 +20,8 @@ public:
           detailKnob (apvts, Parameters::detail),
           outputKnob (apvts, Parameters::outputGain),
           mixKnob (apvts, Parameters::mix),
-          shapeBox (apvts, Parameters::shape),
-          oversamplingBox (apvts, Parameters::oversampling),
+          shapeSwitch (apvts, Parameters::shape),
+          oversamplingSwitch (apvts, Parameters::oversampling),
           bypassAttachment (apvts, Parameters::bypass.getParamID(), bypassButton),
           curveDisplay (apvts)
     {
@@ -32,8 +32,8 @@ public:
 
         detailKnob.setPointerColour (Palette::detail);
 
-        addAndMakeVisible (shapeBox);
-        addAndMakeVisible (oversamplingBox);
+        addAndMakeVisible (shapeSwitch);
+        addAndMakeVisible (oversamplingSwitch);
         addAndMakeVisible (bypassButton);
         // The curve over the spectrogram
         addAndMakeVisible (spectrogram);
@@ -56,9 +56,9 @@ public:
         // Each section's width follows how many controls it holds
         const std::pair<const char*, std::vector<juce::Component*>> layout[] {
             { "INPUT", { &inputKnob } },
-            { "CLIP", { &thresholdKnob, &softnessKnob, &detailKnob, &shapeBox } },
+            { "CLIP", { &thresholdKnob, &softnessKnob, &detailKnob, &shapeSwitch } },
             { "OUTPUT", { &outputKnob, &mixKnob } },
-            { "QUALITY", { &oversamplingBox } },
+            { "QUALITY", { &oversamplingSwitch } },
         };
 
         auto row = juce::Rectangle (24, 306, 752, 178);
@@ -82,7 +82,7 @@ public:
 private:
     Faceplate faceplate;
     Knob inputKnob, thresholdKnob, softnessKnob, detailKnob, outputKnob, mixKnob;
-    ChoiceBox shapeBox, oversamplingBox;
+    RotarySwitch shapeSwitch, oversamplingSwitch;
     juce::ToggleButton bypassButton { "Bypass" };
     juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttachment;
 

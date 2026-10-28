@@ -109,17 +109,18 @@ void ClipLookAndFeel::drawToggleButton (juce::Graphics& g, juce::ToggleButton& b
 }
 
 // A machined knob with a knurled edge, inside a printed scale. The light comes from above, so the shading
-// stays put while the pointer turns.
+// stays put while the pointer turns. A rotary switch is a smaller knob, with its choices printed by RotarySwitch.
 void ClipLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height, float sliderPos,
                                         float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider)
 {
     const auto centre = juce::Rectangle (x, y, width, height).toFloat().getCentre();
-    const auto scaleRadius = 41.0f, capRadius = 28.0f, faceRadius = 23.0f;
+    const auto isSwitch = (bool) slider.getProperties()[rotarySwitchProperty];
+    const auto scaleRadius = 41.0f, capRadius = isSwitch ? 20.0f : 28.0f, faceRadius = capRadius - 5.0f;
     const auto circle = [&] (float radius) { return juce::Rectangle (radius * 2.0f, radius * 2.0f).withCentre (centre); };
 
     // Major ticks at both ends and the middle
     constexpr auto numTicks = 11;
-    for (auto i = 0; i < numTicks; ++i)
+    for (auto i = 0; i < (isSwitch ? 0 : numTicks); ++i)
     {
         const auto major = i == 0 || i == numTicks / 2 || i == numTicks - 1;
         const auto angle = rotaryStartAngle + (float) i / (numTicks - 1) * (rotaryEndAngle - rotaryStartAngle);
@@ -170,7 +171,7 @@ void ClipLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
 
     const auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
     juce::Path pointer;
-    pointer.addRoundedRectangle (-1.0f, -(capRadius - 7.0f), 2.0f, 13.0f, 1.0f);
+    pointer.addRoundedRectangle (-1.0f, -(capRadius - 7.0f), 2.0f, capRadius * 0.46f, 1.0f);
     g.setColour (slider.findColour (juce::Slider::rotarySliderFillColourId));
     g.fillPath (pointer, juce::AffineTransform::rotation (angle).translated (centre));
 }
