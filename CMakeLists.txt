@@ -4,7 +4,10 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Build architectures")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0" CACHE STRING "Minimum macOS version")
 
-project(CLIP VERSION 0.0.1)
+# Static MSVC runtime so the plugin loads without the Visual C++ Redistributable installed. Ignored on other platforms.
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+project(CLIP VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,7 +25,11 @@ endif ()
 
 # Share downloaded packages (JUCE) across build dirs so a clean rebuild doesn't refetch
 if (NOT DEFINED CPM_SOURCE_CACHE AND NOT DEFINED ENV{CPM_SOURCE_CACHE})
-    set(CPM_SOURCE_CACHE "$ENV{HOME}/.cache/CPM" CACHE PATH "CPM package download cache")
+    set(HomeDir "$ENV{HOME}")
+    if (NOT HomeDir)
+        set(HomeDir "$ENV{USERPROFILE}") # Windows
+    endif ()
+    set(CPM_SOURCE_CACHE "${HomeDir}/.cache/CPM" CACHE PATH "CPM package download cache")
 endif ()
 
 include(${CPM_DOWNLOAD_LOCATION})
