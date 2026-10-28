@@ -19,9 +19,9 @@ public:
             const auto faceplates = findAll<Faceplate>(*editor);
             const auto glasses = findAll<DisplayGlass>(*editor);
             expectEquals((int) faceplates.size(), 1);
-            expectEquals((int) glasses.size(), 1);
+            expectEquals((int) glasses.size(), 2);
 
-            for (auto* layer : { (juce::Component*) faceplates.front(), (juce::Component*) glasses.front() })
+            for (auto* layer : { (juce::Component*) faceplates.front(), (juce::Component*) glasses.front(), (juce::Component*) glasses.back() })
             {
                 expect(layer->getCachedComponentImage() != nullptr);
                 auto clicks = true, childClicks = true;
@@ -32,7 +32,7 @@ public:
 
         beginTest("renders at 1x and 2x");
         {
-            fillSpectrum(*editor);
+            fillHistory(*editor);
             const auto folder = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getSiblingFile("snapshots");
             folder.createDirectory();
 
@@ -50,23 +50,24 @@ public:
     }
 
 private:
-    // A clipped tone sweeping up, so the snapshot shows what the spectrum looks like with audio
-    static void fillSpectrum(juce::Component& editor)
+    // Bursts of a clipped tone, some with detail, so the snapshot shows what the history looks like with audio
+    static void fillHistory(juce::Component& editor)
     {
         constexpr auto sampleRate = 44100.0;
-        auto* spectrum = findAll<Spectrum>(editor).front();
-        std::vector<ClipTap::Frame> frames((size_t) Spectrum::fftSize * 2);
+        auto* history = findAll<PeakHistory>(editor).front();
+        std::vector<ClipTap::Frame> frames((size_t) (sampleRate * PeakHistory::secondsShown));
 
-        auto phase = 0.0;
         for (size_t i = 0; i < frames.size(); ++i)
         {
-            phase += juce::MathConstants<double>::twoPi * (60.0 + 4000.0 * (double) i / (double) frames.size()) / sampleRate;
-            const auto input = 1.6f * (float) std::sin(phase);
-            const auto output = (float) std::tanh(input);
-            frames[i] = { input, output, output };
+            const auto seconds = (double) i / sampleRate;
+            const auto burst = std::fmod(seconds, 0.5) < 0.12 ? 2.4f : 0.4f;
+            const auto sine = burst * (float) std::sin(juce::MathConstants<double>::twoPi * 220.0 * seconds);
+            const auto plain = juce::jlimit(-1.0f, 1.0f, sine);
+            const auto detail = std::fmod(seconds, 1.0) < 0.5 ? 0.25f : 0.0f;
+            frames[i] = { sine, plain + detail * (sine - plain) / 1.4f, plain };
         }
 
-        spectrum->update(frames.data(), (int) frames.size(), sampleRate);
+        history->update(frames.data(), (int) frames.size(), sampleRate);
     }
 
     template <typename ComponentType>
