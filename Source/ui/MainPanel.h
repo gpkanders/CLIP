@@ -1,4 +1,5 @@
 #pragma once
+#include "DisplayGlass.h"
 #include "Faceplate.h"
 #include "Knob.h"
 #include "RotarySwitch.h"
@@ -38,6 +39,7 @@ public:
         // The curve over the spectrogram
         addAndMakeVisible (spectrogram);
         addAndMakeVisible (curveDisplay);
+        addAndMakeVisible (glass);
         setSize (width, height);
     }
 
@@ -51,6 +53,7 @@ public:
         const juce::Rectangle bezel (24, 46, 752, 246);
         spectrogram.setBounds (bezel.reduced (4));
         curveDisplay.setBounds (bezel.reduced (4));
+        glass.setBounds (bezel.reduced (4));
         bypassButton.setBounds (676, 10, 92, 26);
 
         // Each section's width follows how many controls it holds
@@ -88,4 +91,5 @@ private:
 
     Spectrogram spectrogram;
     TransferCurveDisplay curveDisplay;
+    DisplayGlass glass;
 };

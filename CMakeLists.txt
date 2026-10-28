@@ -47,6 +47,7 @@ set(SourceFiles
         Source/ui/ClipLookAndFeel.cpp
         Source/ui/RotarySwitch.h
         Source/ui/ClipLookAndFeel.h
+        Source/ui/DisplayGlass.h
         Source/ui/Faceplate.h
         Source/ui/Knob.h
         Source/ui/MainPanel.h

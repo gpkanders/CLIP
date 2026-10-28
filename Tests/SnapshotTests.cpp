@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "ui/DisplayGlass.h"
 #include "ui/Faceplate.h"
 
 // Renders the editor to PNGs next to the test binary (snapshots/editor@1x.png and @2x.png) for reviewing
@@ -13,14 +14,20 @@ public:
         ClipAudioProcessor processor;
         std::unique_ptr<juce::AudioProcessorEditor> editor(processor.createEditor());
 
-        beginTest("the faceplate is cached and ignores the mouse");
+        beginTest("the faceplate and display glass are cached and ignore the mouse");
         {
             const auto faceplates = findAll<Faceplate>(*editor);
+            const auto glasses = findAll<DisplayGlass>(*editor);
             expectEquals((int) faceplates.size(), 1);
-            expect(faceplates.front()->getCachedComponentImage() != nullptr);
-            auto clicks = true, childClicks = true;
-            faceplates.front()->getInterceptsMouseClicks(clicks, childClicks);
-            expect(! clicks && ! childClicks);
+            expectEquals((int) glasses.size(), 1);
+
+            for (auto* layer : { (juce::Component*) faceplates.front(), (juce::Component*) glasses.front() })
+            {
+                expect(layer->getCachedComponentImage() != nullptr);
+                auto clicks = true, childClicks = true;
+                layer->getInterceptsMouseClicks(clicks, childClicks);
+                expect(! clicks && ! childClicks);
+            }
         }
 
         beginTest("renders at 1x and 2x");
