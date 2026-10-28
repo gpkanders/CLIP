@@ -26,13 +26,13 @@ public:
             expect(history.update(frames.data(), 1, sampleRate));
         }
 
-        beginTest("lights the clip lamp when the output falls short of the input, and the detail lamp when detail adds to it");
+        beginTest("lights the clip lamp when the output falls short of the input, and the detail lamp when detail dips below it");
         {
             // Peaks: input, output, and output without detail
             const std::tuple<float, float, float, bool, bool, const char*> cases[] {
                 { 0.5f, 0.5f, 0.5f, false, false, "untouched" },
                 { 2.0f, 1.0f, 1.0f, true, false, "clipped" },
-                { 2.0f, 1.3f, 1.0f, true, true, "clipped with detail" },
+                { 2.0f, 0.8f, 1.0f, true, true, "clipped with detail" },
             };
 
             for (const auto& [input, output, plain, clipped, detailed, name] : cases)
@@ -52,7 +52,7 @@ public:
             ClipAudioProcessor processor;
             PeakHistory history(processor.apvts);
             history.setSize(width, 200);
-            history.update(tone(2.0f, 1.3f, 1.0f, samplesPerColumn * 10).data(), samplesPerColumn * 10, sampleRate);
+            history.update(tone(2.0f, 0.8f, 1.0f, samplesPerColumn * 10).data(), samplesPerColumn * 10, sampleRate);
 
             const auto quiet = tone(0.5f, 0.5f, 0.5f, (int) sampleRate);
             history.update(quiet.data(), samplesPerColumn, sampleRate);

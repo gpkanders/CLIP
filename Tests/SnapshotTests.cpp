@@ -50,21 +50,41 @@ public:
     }
 
 private:
-    // Bursts of a clipped tone, some with detail, so the snapshot shows what the history looks like with audio
+    // Bursts of a low tone with a quiet high one riding on it, clipped as set and without detail like ClipTap does,
+    // so the snapshot shows what the history looks like with audio
     static void fillHistory(juce::Component& editor)
     {
         constexpr auto sampleRate = 44100.0;
         auto* history = findAll<PeakHistory>(editor).front();
-        std::vector<ClipTap::Frame> frames((size_t) (sampleRate * PeakHistory::secondsShown));
+        const auto numSamples = (int) (sampleRate * PeakHistory::secondsShown);
 
-        for (size_t i = 0; i < frames.size(); ++i)
+        juce::AudioBuffer<float> output(1, numSamples), plain(1, numSamples);
+        std::vector<ClipTap::Frame> frames((size_t) numSamples);
+        for (auto i = 0; i < numSamples; ++i)
         {
             const auto seconds = (double) i / sampleRate;
             const auto burst = std::fmod(seconds, 0.5) < 0.12 ? 2.4f : 0.4f;
-            const auto sine = burst * (float) std::sin(juce::MathConstants<double>::twoPi * 220.0 * seconds);
-            const auto plain = juce::jlimit(-1.0f, 1.0f, sine);
-            const auto detail = std::fmod(seconds, 1.0) < 0.5 ? 0.25f : 0.0f;
-            frames[i] = { sine, plain + detail * (sine - plain) / 1.4f, plain };
+            const auto input = burst * (float) std::sin(juce::MathConstants<double>::twoPi * 100.0 * seconds)
+                               + 0.15f * (float) std::sin(juce::MathConstants<double>::twoPi * 4000.0 * seconds);
+            frames[(size_t) i].input = input;
+            output.setSample(0, i, input);
+            plain.setSample(0, i, input);
+        }
+
+        Clipper detailed, flat;
+        for (auto* clipper : { &detailed, &flat })
+        {
+            clipper->setParameters(0.0f, 0.0f, 50.0f, 0.0f);
+            clipper->setDetail(clipper == &detailed ? 100.0f : 0.0f);
+            clipper->prepare(sampleRate);
+        }
+        detailed.process(juce::dsp::AudioBlock<float>(output));
+        flat.process(juce::dsp::AudioBlock<float>(plain));
+
+        for (auto i = 0; i < numSamples; ++i)
+        {
+            frames[(size_t) i].output = output.getSample(0, i);
+            frames[(size_t) i].plain = plain.getSample(0, i);
         }
 
         history->update(frames.data(), (int) frames.size(), sampleRate);
