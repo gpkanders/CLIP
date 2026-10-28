@@ -6,8 +6,9 @@
 
 // The clipper's input and output peaks scrolling right to left in dBFS, under a line at the threshold.
 // The output is drawn without Detail, so it never rises past the threshold. Red shows where the input went past
-// it, which is what the clip took off. Yellow hangs down from the threshold instead of rising above it, by how many
-// dB Detail gave back on the clipped peaks, on the same scale as the red above it.
+// it, which is what the clip took off. The clip still holds the ceiling with Detail on, so what Detail keeps on
+// the clipped peaks is ripple dipping below it. Yellow hangs down from the threshold by how deep that ripple goes,
+// enlarged since it's usually only a dB or two.
 // A lamp for each in the corner lights while that layer showed up recently.
 class PeakHistory : public juce::Component
 {
@@ -16,6 +17,7 @@ public:
     static constexpr float floorDb = -48.0f;
     static constexpr float topDb = 12.0f;
     static constexpr float gridStepDb = 12.0f;
+    static constexpr float detailZoom = 4.0f;
 
     // A layer counts as active past this many dB, and its lamp stays lit this long after
     static constexpr float activeDb = 0.1f;
@@ -47,7 +49,7 @@ public:
         {
             const auto& frame = frames[i];
             current.input = std::max (current.input, std::abs (frame.input));
-            current.output = std::max (current.output, std::abs (frame.output));
+            current.ripple = std::max (current.ripple, std::abs (frame.output - frame.plain));
             current.plain = std::max (current.plain, std::abs (frame.plain));
 
             if (++samplesInCurrent == samplesPerColumn)
@@ -74,7 +76,7 @@ public:
         for (auto age = 1; age <= lampColumns; ++age)
         {
             const auto& column = columns[(size_t) ((next - age + (int) columns.size()) % (int) columns.size())];
-            if ((layer == clip ? column.clippedDb() : column.detailDb()) > activeDb)
+            if ((layer == clip ? column.clippedDb() : column.detailDb (ceiling())) > activeDb)
                 return true;
         }
         return false;
@@ -138,11 +140,14 @@ private:
     // The loudest samples in one column of pixels, at the clipper
     struct Column
     {
-        float input = 0.0f, output = 0.0f, plain = 0.0f;
+        float input = 0.0f, plain = 0.0f, ripple = 0.0f;
 
         float clippedDb() const { return toDb (input) - toDb (plain); }
-        float detailDb() const { return toDb (output) - toDb (plain); }
+        // How far below the ceiling the ripple Detail kept reaches
+        float detailDb (float ceiling) const { return -toDb (1.0f - std::min (1.0f, ripple / ceiling)); }
     };
+
+    float ceiling() const { return juce::Decibels::decibelsToGain (shownThreshold); }
 
     static float toDb (float gain) { return juce::Decibels::gainToDecibels (gain, floorDb); }
 
@@ -162,13 +167,13 @@ private:
         return path;
     }
 
-    // Down from the threshold, as many dB as Detail added to the clipped peak
+    // Down from the threshold, as deep as the ripple Detail kept on the clipped peaks
     void paintDetail (juce::Graphics& g) const
     {
         const auto thresholdY = toY (shownThreshold);
         const auto pixelsPerDb = (float) getHeight() / (topDb - floorDb);
         // Filled only, since an outline would run along the threshold wherever there's no detail
-        auto hanging = edge ([&] (const Column& column) { return thresholdY + column.detailDb() * pixelsPerDb; });
+        auto hanging = edge ([&] (const Column& column) { return thresholdY + column.detailDb (ceiling()) * detailZoom * pixelsPerDb; });
         hanging.lineTo ((float) getWidth() + 2.0f, thresholdY);
         hanging.lineTo (-2.0f, thresholdY);
         hanging.closeSubPath();
