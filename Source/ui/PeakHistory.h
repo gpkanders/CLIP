@@ -5,8 +5,9 @@
 #include "../dsp/ClipTap.h"
 
 // The clipper's input and output peaks scrolling right to left in dBFS, under a line at the threshold.
-// Red shows where the input went past the output, which is what the clip took off. Yellow hangs down from
-// the threshold by how many dB Detail gave back on the clipped peaks, on the same scale as the red above it.
+// The output is drawn without Detail, so it never rises past the threshold. Red shows where the input went past
+// it, which is what the clip took off. Yellow hangs down from the threshold instead of rising above it, by how many
+// dB Detail gave back on the clipped peaks, on the same scale as the red above it.
 // A lamp for each in the corner lights while that layer showed up recently.
 class PeakHistory : public juce::Component
 {
@@ -92,7 +93,7 @@ public:
             g.drawHorizontalLine (juce::roundToInt (toY (db)), 0.0f, (float) getWidth());
 
         const auto inputY = [this] (const Column& column) { return toY (toDb (column.input)); };
-        const auto outputY = [this] (const Column& column) { return toY (toDb (column.output)); };
+        const auto outputY = [this] (const Column& column) { return toY (toDb (column.plain)); };
 
         // Between the input and the output, where the clip took the input down
         auto clipped = edge (inputY);
@@ -139,7 +140,7 @@ private:
     {
         float input = 0.0f, output = 0.0f, plain = 0.0f;
 
-        float clippedDb() const { return toDb (input) - toDb (output); }
+        float clippedDb() const { return toDb (input) - toDb (plain); }
         float detailDb() const { return toDb (output) - toDb (plain); }
     };
 
