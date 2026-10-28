@@ -27,4 +27,4 @@ open build-xcode/CLIP.xcodeproj
 ./build/CLIPTests_artefacts/Debug/CLIPTests
 ```
 
-CI runs the unit tests, pluginval (strictness 10) and auval. It's manual only: Actions tab > Build > Run workflow.
+CI runs the unit tests and pluginval (strictness 10) on Windows for every PR and push to main. The macOS job (unit tests, pluginval and auval) is manual only: Actions tab > Build > Run workflow.
