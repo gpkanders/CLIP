@@ -25,7 +25,7 @@ public:
         addAndMakeVisible (slider);
     }
 
-    void setArcColour (juce::Colour colour) { slider.setColour (juce::Slider::rotarySliderFillColourId, colour); }
+    void setPointerColour (juce::Colour colour) { slider.setColour (juce::Slider::rotarySliderFillColourId, colour); }
 
     void resized() override
     {
