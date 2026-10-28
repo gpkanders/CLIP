@@ -4,8 +4,9 @@
 // Loaded once and shared by every open editor
 struct ClipLookAndFeel::Typefaces
 {
-    juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::BarlowRegular_ttf, BinaryData::BarlowRegular_ttfSize);
-    juce::Typeface::Ptr bold = juce::Typeface::createSystemTypefaceFor (BinaryData::BarlowSemiBold_ttf, BinaryData::BarlowSemiBold_ttfSize);
+    juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::ArchivoMedium_ttf, BinaryData::ArchivoMedium_ttfSize);
+    juce::Typeface::Ptr bold = juce::Typeface::createSystemTypefaceFor (BinaryData::ArchivoBold_ttf, BinaryData::ArchivoBold_ttfSize);
+    juce::Typeface::Ptr display = juce::Typeface::createSystemTypefaceFor (BinaryData::BarlowRegular_ttf, BinaryData::BarlowRegular_ttfSize);
 };
 
 ClipLookAndFeel::ClipLookAndFeel()
@@ -45,6 +46,12 @@ juce::Font ClipLookAndFeel::font (float height, bool bold)
 {
     const juce::SharedResourcePointer<Typefaces> shared;
     return juce::Font (juce::FontOptions (bold ? shared->bold : shared->regular).withHeight (height));
+}
+
+juce::Font ClipLookAndFeel::displayFont (float height)
+{
+    const juce::SharedResourcePointer<Typefaces> shared;
+    return juce::Font (juce::FontOptions (shared->display).withHeight (height));
 }
 
 // LookAndFeel_V4's toggle, drawing its text with the embedded font
