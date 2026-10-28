@@ -8,9 +8,10 @@ public:
     void runTest() override
     {
         beginTest("the embedded typefaces load");
-        expectEquals(ClipLookAndFeel::font(15.0f).getTypefaceName(), juce::String("Barlow"));
-        expectEquals(ClipLookAndFeel::font(15.0f, true).getTypefaceStyle(), juce::String("SemiBold"));
-        expectEquals(ClipLookAndFeel::font(15.0f).getTypefaceStyle(), juce::String("Regular"));
+        expectEquals(ClipLookAndFeel::font(15.0f).getTypefaceName(), juce::String("Archivo"));
+        expectEquals(ClipLookAndFeel::font(15.0f, true).getTypefaceStyle(), juce::String("Bold"));
+        expectEquals(ClipLookAndFeel::font(15.0f).getTypefaceStyle(), juce::String("Medium"));
+        expectEquals(ClipLookAndFeel::displayFont(11.0f).getTypefaceName(), juce::String("Barlow"));
 
         beginTest("the editor and all its labels use the embedded font");
         ClipAudioProcessor processor;
@@ -22,7 +23,7 @@ public:
             if (auto* label = dynamic_cast<juce::Label*>(&component))
             {
                 ++numLabels;
-                expectEquals(label->getLookAndFeel().getLabelFont(*label).getTypefaceName(), juce::String("Barlow"), label->getText());
+                expectEquals(label->getLookAndFeel().getLabelFont(*label).getTypefaceName(), juce::String("Archivo"), label->getText());
             }
         });
 

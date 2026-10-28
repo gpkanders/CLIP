@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "ClipLookAndFeel.h"
 
 // Combo box bound to a choice parameter, with its name above
 class ChoiceBox : public juce::Component
@@ -12,8 +13,9 @@ public:
         box.addItemList (parameter.choices, 1);
         attachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (apvts, id.getParamID(), box);
 
-        label.setText (parameter.getName (32), juce::dontSendNotification);
-        label.setFont (juce::FontOptions (15.0f, juce::Font::bold));
+        label.setText (parameter.getName (32).toUpperCase(), juce::dontSendNotification);
+        label.setFont (juce::FontOptions (9.5f, juce::Font::bold).withKerningFactor (0.12f));
+        label.setColour (juce::Label::textColourId, Palette::silkscreen);
         label.setJustificationType (juce::Justification::centred);
 
         addAndMakeVisible (label);
@@ -23,8 +25,9 @@ public:
     void resized() override
     {
         auto bounds = getLocalBounds();
-        label.setBounds (bounds.removeFromTop (24));
-        box.setBounds (bounds.removeFromTop (28));
+        label.setBounds (bounds.removeFromTop (14));
+        bounds.removeFromTop (4);
+        box.setBounds (bounds.removeFromTop (28).reduced (6, 0));
     }
 
 private:

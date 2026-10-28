@@ -47,6 +47,7 @@ set(SourceFiles
         Source/ui/ClipLookAndFeel.cpp
         Source/ui/ChoiceBox.h
         Source/ui/ClipLookAndFeel.h
+        Source/ui/Faceplate.h
         Source/ui/Knob.h
         Source/ui/MainPanel.h
         Source/ui/TransferCurveDisplay.h
@@ -70,10 +71,11 @@ juce_add_plugin(CLIP
     VST3_CATEGORIES Fx Distortion
 )
 
-# Embedded fonts (SIL Open Font License, see Resources/Fonts/OFL.txt)
+# Embedded fonts (SIL Open Font License, see Resources/Fonts/OFL-*.txt)
 juce_add_binary_data(CLIPBinaryData SOURCES
+        Resources/Fonts/Archivo-Medium.ttf
+        Resources/Fonts/Archivo-Bold.ttf
         Resources/Fonts/Barlow-Regular.ttf
-        Resources/Fonts/Barlow-SemiBold.ttf
 )
 
 # Generates JuceHeader.h for the modules linked below
@@ -115,6 +117,7 @@ target_sources(CLIPTests PRIVATE
         Tests/TransferCurveDisplayTests.cpp
         Tests/SpectrogramTests.cpp
         Tests/LookAndFeelTests.cpp
+        Tests/SnapshotTests.cpp
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
         Source/ui/ClipLookAndFeel.cpp

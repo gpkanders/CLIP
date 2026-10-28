@@ -43,7 +43,7 @@ public:
     void paint (juce::Graphics& g) override
     {
         // Gridlines at multiples of half the ceiling, labelled with the level they mark
-        g.setFont (ClipLookAndFeel::font (11.0f));
+        g.setFont (ClipLookAndFeel::displayFont (11.0f));
         for (auto multiple = 0.5f; multiple < inputRange; multiple += 0.5f)
         {
             const auto label = juce::String (shownThreshold + juce::Decibels::gainToDecibels (multiple), 1) + " dB";
