@@ -32,7 +32,7 @@ public:
 
         beginTest("renders at 1x and 2x");
         {
-            fillSpectrogram(*editor);
+            fillSpectrum(*editor);
             const auto folder = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getSiblingFile("snapshots");
             folder.createDirectory();
 
@@ -50,12 +50,12 @@ public:
     }
 
 private:
-    // A clipped tone sweeping up, so the snapshot shows what the spectrogram looks like with audio
-    static void fillSpectrogram(juce::Component& editor)
+    // A clipped tone sweeping up, so the snapshot shows what the spectrum looks like with audio
+    static void fillSpectrum(juce::Component& editor)
     {
         constexpr auto sampleRate = 44100.0;
-        auto* spectrogram = findAll<Spectrogram>(editor).front();
-        std::vector<ClipTap::Frame> frames((size_t) (spectrogram->getWidth() * Spectrogram::hopSize));
+        auto* spectrum = findAll<Spectrum>(editor).front();
+        std::vector<ClipTap::Frame> frames((size_t) Spectrum::fftSize * 2);
 
         auto phase = 0.0;
         for (size_t i = 0; i < frames.size(); ++i)
@@ -66,7 +66,7 @@ private:
             frames[i] = { input, output, output };
         }
 
-        spectrogram->update(frames.data(), (int) frames.size(), sampleRate);
+        spectrum->update(frames.data(), (int) frames.size(), sampleRate);
     }
 
     template <typename ComponentType>
